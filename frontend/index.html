@@ -273,10 +273,31 @@
                     </button>
                 </div>
                 <div class="toolbar-right">
-                    <button class="btn btn-success" onclick="exportResults()">
-                        <span class="btn-icon">💾</span>
-                        Export Results
-                    </button>
+                    <div class="export-dropdown">
+                        <button class="btn btn-success" onclick="toggleExportDropdown()">
+                            <span class="btn-icon">💾</span>
+                            Export Results
+                            <span class="dropdown-arrow">▼</span>
+                        </button>
+                        <div class="export-dropdown-menu" id="exportDropdown">
+                            <button class="export-option" onclick="exportAs('png')">
+                                <span class="export-icon">🖼️</span>
+                                PNG Image
+                            </button>
+                            <button class="export-option" onclick="exportAs('jpg')">
+                                <span class="export-icon">📸</span>
+                                JPG Image
+                            </button>
+                            <button class="export-option" onclick="exportAsPDF()">
+                                <span class="export-icon">📄</span>
+                                PDF Report
+                            </button>
+                            <button class="export-option" onclick="exportAll()">
+                                <span class="export-icon">📦</span>
+                                Export All
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -448,6 +469,63 @@
             </div>
         </div>
     </div>
+
+    <!-- PDF Report Modal -->
+    <div class="modal-overlay" id="pdfModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Generate PDF Report</h2>
+                <button class="icon-btn" onclick="closePDFModal()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="modal-body">
+                <p class="modal-description">Configure your PDF report settings</p>
+                
+                <div class="control-group">
+                    <label>Report Title</label>
+                    <input type="text" id="pdfTitle" value="Image Processing Report" class="control-input">
+                </div>
+                
+                <div class="control-group">
+                    <label>Include Original Image</label>
+                    <input type="checkbox" id="includeOriginal" checked>
+                </div>
+                
+                <div class="control-group">
+                    <label>Include Processed Image</label>
+                    <input type="checkbox" id="includeProcessed" checked>
+                </div>
+                
+                <div class="control-group">
+                    <label>Include Processing Details</label>
+                    <input type="checkbox" id="includeDetails" checked>
+                </div>
+                
+                <div class="control-group">
+                    <label>Include Metadata</label>
+                    <input type="checkbox" id="includeMetadata" checked>
+                </div>
+                
+                <div class="control-group">
+                    <label>Additional Notes</label>
+                    <textarea id="pdfNotes" placeholder="Add any additional notes..." rows="3" class="control-input"></textarea>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closePDFModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="generatePDFReport()">Generate PDF</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
     <script>
         // Global variables
         let currentImage = null;
@@ -1169,24 +1247,313 @@
             return params;
         }
 
-        function exportResults() {
+        function toggleExportDropdown() {
+            const dropdown = document.getElementById('exportDropdown');
+            dropdown.classList.toggle('active');
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function closeDropdown(e) {
+                if (!e.target.closest('.export-dropdown')) {
+                    dropdown.classList.remove('active');
+                    document.removeEventListener('click', closeDropdown);
+                }
+            });
+        }
+
+        function exportAs(format) {
             if (!processedImage && !currentImage) {
                 showMessage('No images to export', 'error');
                 return;
             }
 
-            const link = document.createElement('a');
+            const imageToExport = processedImage || currentImage;
+            const filename = `${currentOperation ? `processed_${currentOperation}` : 'image'}_${Date.now()}`;
             
-            if (processedImage) {
-                link.href = processedImage;
-                link.download = `processed_${currentOperation}_${Date.now()}.png`;
-            } else {
-                link.href = currentImage;
-                link.download = `image_${Date.now()}.png`;
+            if (format === 'png') {
+                downloadImage(imageToExport, `${filename}.png`);
+            } else if (format === 'jpg') {
+                convertAndDownload(imageToExport, filename, 'image/jpeg', '.jpg');
             }
             
+            document.getElementById('exportDropdown').classList.remove('active');
+            showMessage(`Image exported as ${format.toUpperCase()}`, 'success');
+        }
+
+        function convertAndDownload(imageSrc, filename, mimeType, extension) {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const img = new Image();
+            
+            img.onload = function() {
+                canvas.width = img.width;
+                canvas.height = img.height;
+                
+                // Fill white background for JPG
+                if (mimeType === 'image/jpeg') {
+                    ctx.fillStyle = 'white';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                }
+                
+                ctx.drawImage(img, 0, 0);
+                
+                canvas.toBlob(function(blob) {
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = filename + extension;
+                    link.click();
+                    URL.revokeObjectURL(link.href);
+                }, mimeType, 0.9);
+            };
+            
+            img.src = imageSrc;
+        }
+
+        function downloadImage(imageSrc, filename) {
+            const link = document.createElement('a');
+            link.href = imageSrc;
+            link.download = filename;
             link.click();
-            showMessage('Image exported successfully', 'success');
+        }
+
+        function exportAsPDF() {
+            if (!processedImage && !currentImage) {
+                showMessage('No images to export', 'error');
+                return;
+            }
+            
+            document.getElementById('pdfModal').classList.add('active');
+            document.getElementById('exportDropdown').classList.remove('active');
+        }
+
+        function closePDFModal() {
+            document.getElementById('pdfModal').classList.remove('active');
+        }
+
+        function generatePDFReport() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            // Get form values
+            const title = document.getElementById('pdfTitle').value || 'Image Processing Report';
+            const includeOriginal = document.getElementById('includeOriginal').checked;
+            const includeProcessed = document.getElementById('includeProcessed').checked;
+            const includeDetails = document.getElementById('includeDetails').checked;
+            const includeMetadata = document.getElementById('includeMetadata').checked;
+            const notes = document.getElementById('pdfNotes').value;
+            
+            let yPosition = 20;
+            
+            // Title
+            doc.setFontSize(20);
+            doc.setFont(undefined, 'bold');
+            doc.text(title, 20, yPosition);
+            yPosition += 15;
+            
+            // Timestamp
+            doc.setFontSize(12);
+            doc.setFont(undefined, 'normal');
+            doc.text(`Generated: ${new Date().toLocaleString()}`, 20, yPosition);
+            yPosition += 20;
+            
+            // Processing details
+            if (includeDetails && currentOperation) {
+                doc.setFontSize(14);
+                doc.setFont(undefined, 'bold');
+                doc.text('Processing Details', 20, yPosition);
+                yPosition += 10;
+                
+                doc.setFontSize(12);
+                doc.setFont(undefined, 'normal');
+                doc.text(`Operation: ${currentOperation.replace(/-/g, ' ').toUpperCase()}`, 20, yPosition);
+                yPosition += 8;
+                
+                // Add operation-specific parameters
+                const params = getOperationParametersForPDF();
+                Object.entries(params).forEach(([key, value]) => {
+                    doc.text(`${key}: ${value}`, 20, yPosition);
+                    yPosition += 6;
+                });
+                
+                yPosition += 10;
+            }
+            
+            // Add images
+            const imagePromises = [];
+            
+            if (includeOriginal && currentImage) {
+                imagePromises.push(addImageToPDF(doc, currentImage, 'Original Image', yPosition));
+            }
+            
+            if (includeProcessed && processedImage) {
+                const nextY = includeOriginal && currentImage ? yPosition + 80 : yPosition;
+                imagePromises.push(addImageToPDF(doc, processedImage, 'Processed Image', nextY));
+            }
+            
+            Promise.all(imagePromises).then(() => {
+                // Calculate final yPosition
+                let finalY = yPosition;
+                if (includeOriginal && currentImage) finalY += 80;
+                if (includeProcessed && processedImage) finalY += 80;
+                
+                // Add metadata
+                if (includeMetadata) {
+                    finalY += 20;
+                    doc.setFontSize(14);
+                    doc.setFont(undefined, 'bold');
+                    doc.text('Metadata', 20, finalY);
+                    finalY += 10;
+                    
+                    doc.setFontSize(10);
+                    doc.setFont(undefined, 'normal');
+                    doc.text('Application: OpenCV Image Processing Studio', 20, finalY);
+                    finalY += 6;
+                    doc.text('Backend: FastAPI + OpenCV', 20, finalY);
+                    finalY += 6;
+                    doc.text(`Export Time: ${new Date().toISOString()}`, 20, finalY);
+                    finalY += 10;
+                }
+                
+                // Add notes
+                if (notes.trim()) {
+                    finalY += 10;
+                    doc.setFontSize(14);
+                    doc.setFont(undefined, 'bold');
+                    doc.text('Additional Notes', 20, finalY);
+                    finalY += 10;
+                    
+                    doc.setFontSize(11);
+                    doc.setFont(undefined, 'normal');
+                    const splitNotes = doc.splitTextToSize(notes, 170);
+                    doc.text(splitNotes, 20, finalY);
+                }
+                
+                // Save PDF
+                const filename = `${currentOperation ? `${currentOperation}_report` : 'image_report'}_${Date.now()}.pdf`;
+                doc.save(filename);
+                
+                closePDFModal();
+                showMessage('PDF report generated successfully', 'success');
+            }).catch(error => {
+                console.error('PDF generation error:', error);
+                showMessage('Error generating PDF report', 'error');
+            });
+        }
+
+        function addImageToPDF(doc, imageSrc, title, yPosition) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = function() {
+                    doc.setFontSize(12);
+                    doc.setFont(undefined, 'bold');
+                    doc.text(title, 20, yPosition);
+                    
+                    // Calculate image dimensions to fit in PDF
+                    const maxWidth = 170;
+                    const maxHeight = 60;
+                    let width = img.width;
+                    let height = img.height;
+                    
+                    if (width > maxWidth) {
+                        height = (height * maxWidth) / width;
+                        width = maxWidth;
+                    }
+                    
+                    if (height > maxHeight) {
+                        width = (width * maxHeight) / height;
+                        height = maxHeight;
+                    }
+                    
+                    doc.addImage(img, 'JPEG', 20, yPosition + 5, width * 0.5, height * 0.5);
+                    resolve();
+                };
+                img.src = imageSrc;
+            });
+        }
+
+        function getOperationParametersForPDF() {
+            const params = {};
+            
+            switch(currentOperation) {
+                case 'rotate':
+                    const angle = document.getElementById('rotateSlider')?.value;
+                    const scale = document.getElementById('scaleSlider')?.value;
+                    if (angle) params['Rotation Angle'] = `${angle}°`;
+                    if (scale) params['Scale Factor'] = scale;
+                    break;
+                case 'blur':
+                    const blurType = document.getElementById('blurType')?.value;
+                    const kernelSize = document.getElementById('blurSlider')?.value;
+                    if (blurType) params['Blur Type'] = blurType;
+                    if (kernelSize) params['Kernel Size'] = kernelSize;
+                    break;
+                case 'threshold':
+                    const threshValue = document.getElementById('threshSlider')?.value;
+                    const threshType = document.getElementById('threshType')?.value;
+                    if (threshValue) params['Threshold Value'] = threshValue;
+                    if (threshType) params['Threshold Type'] = threshType;
+                    break;
+                case 'resize':
+                    const scaleFactor = document.getElementById('scaleResizeSlider')?.value;
+                    const interpMethod = document.getElementById('interpMethod')?.value;
+                    if (scaleFactor) params['Scale Factor'] = `${scaleFactor}x`;
+                    if (interpMethod) params['Interpolation'] = interpMethod;
+                    break;
+                case 'edge-detection':
+                    const lowThresh = document.getElementById('edgeLowSlider')?.value;
+                    const highThresh = document.getElementById('edgeHighSlider')?.value;
+                    if (lowThresh) params['Lower Threshold'] = lowThresh;
+                    if (highThresh) params['Upper Threshold'] = highThresh;
+                    break;
+                case 'color-manipulation':
+                    const hueShift = document.getElementById('hueSlider')?.value;
+                    const satFactor = document.getElementById('satSlider')?.value;
+                    const valFactor = document.getElementById('valSlider')?.value;
+                    if (hueShift) params['Hue Shift'] = `${hueShift}°`;
+                    if (satFactor) params['Saturation Factor'] = satFactor;
+                    if (valFactor) params['Value Factor'] = valFactor;
+                    break;
+                case 'crop':
+                    const x = document.getElementById('cropXSlider')?.value;
+                    const y = document.getElementById('cropYSlider')?.value;
+                    const width = document.getElementById('cropWSlider')?.value;
+                    const height = document.getElementById('cropHSlider')?.value;
+                    if (x) params['X Position'] = `${x}px`;
+                    if (y) params['Y Position'] = `${y}px`;
+                    if (width) params['Width'] = `${width}px`;
+                    if (height) params['Height'] = `${height}px`;
+                    break;
+            }
+            
+            return params;
+        }
+
+        function exportAll() {
+            if (!processedImage && !currentImage) {
+                showMessage('No images to export', 'error');
+                return;
+            }
+            
+            const timestamp = Date.now();
+            const baseName = currentOperation ? `processed_${currentOperation}` : 'image';
+            
+            // Export PNG
+            if (processedImage || currentImage) {
+                const imageToExport = processedImage || currentImage;
+                downloadImage(imageToExport, `${baseName}_${timestamp}.png`);
+                
+                // Export JPG
+                setTimeout(() => {
+                    convertAndDownload(imageToExport, `${baseName}_${timestamp}`, 'image/jpeg', '.jpg');
+                }, 500);
+                
+                // Export PDF
+                setTimeout(() => {
+                    exportAsPDF();
+                }, 1000);
+            }
+            
+            document.getElementById('exportDropdown').classList.remove('active');
+            showMessage('Exporting all formats...', 'success');
         }
 
         // Utility functions
@@ -1227,11 +1594,15 @@
                         break;
                     case 's':
                         e.preventDefault();
-                        exportResults();
+                        toggleExportDropdown();
                         break;
                     case 'b':
                         e.preventDefault();
                         openBatchModal();
+                        break;
+                    case 'p':
+                        e.preventDefault();
+                        exportAsPDF();
                         break;
                 }
             }
