@@ -12,131 +12,377 @@
         <!-- Sidebar -->
         <div class="sidebar">
             <div class="sidebar-header">
-                <h1>OpenCV Processing Studio</h1>
-                <p>Professional Image Processing Tools</p>
+                <div class="logo">
+                    <div class="logo-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h1>OpenCV Studio</h1>
+                        <p>Professional Image Processing</p>
+                    </div>
+                </div>
             </div>
             
             <div class="operations-section">
-                <!-- Topic 1: Getting Started -->
+                <!-- Getting Started -->
                 <div class="operation-group">
-                    <div class="section-title">Getting Started</div>
-                    <button class="operation-btn" data-operation="dimensions">Show Dimensions</button>
+                    <div class="section-title">
+                        <span class="section-icon">🚀</span>
+                        Getting Started
+                    </div>
+                    <button class="operation-btn" data-operation="dimensions">
+                        <span class="btn-icon">📏</span>
+                        Show Dimensions
+                        <span class="btn-arrow">→</span>
+                    </button>
                 </div>
 
-                <!-- Topic 2: Grayscaling -->
+                <!-- Grayscaling -->
                 <div class="operation-group">
-                    <div class="section-title">Grayscaling</div>
-                    <button class="operation-btn" data-operation="grayscale">Convert to Grayscale</button>
-                    <button class="operation-btn" data-operation="compare-dimensions">Compare Dimensions</button>
+                    <div class="section-title">
+                        <span class="section-icon">⚫</span>
+                        Grayscaling
+                    </div>
+                    <button class="operation-btn" data-operation="grayscale">
+                        <span class="btn-icon">🎨</span>
+                        Convert to Grayscale
+                        <span class="btn-arrow">→</span>
+                    </button>
+                    <button class="operation-btn" data-operation="compare-dimensions">
+                        <span class="btn-icon">📊</span>
+                        Compare Dimensions
+                        <span class="btn-arrow">→</span>
+                    </button>
                 </div>
 
-                <!-- Topic 3: Color Spaces -->
+                <!-- Color Spaces -->
                 <div class="operation-group">
-                    <div class="section-title">Color Spaces</div>
-                    <button class="operation-btn" data-operation="rgb-channels">RGB Channels</button>
-                    <button class="operation-btn" data-operation="hsv-convert">HSV Conversion</button>
-                    <button class="operation-btn" data-operation="color-manipulation">Color Manipulation</button>
+                    <div class="section-title">
+                        <span class="section-icon">🌈</span>
+                        Color Spaces
+                    </div>
+                    <button class="operation-btn" data-operation="rgb-channels">
+                        <span class="btn-icon">🔴</span>
+                        RGB Channels
+                        <span class="btn-arrow">→</span>
+                    </button>
+                    <button class="operation-btn" data-operation="hsv-convert">
+                        <span class="btn-icon">🎯</span>
+                        HSV Conversion
+                        <span class="btn-arrow">→</span>
+                    </button>
+                    <button class="operation-btn" data-operation="color-manipulation">
+                        <span class="btn-icon">🎪</span>
+                        Color Manipulation
+                        <span class="btn-arrow">→</span>
+                    </button>
                 </div>
 
-                <!-- Topic 4: Drawing & Shapes -->
+                <!-- Drawing & Shapes -->
                 <div class="operation-group">
-                    <div class="section-title">Drawing & Shapes</div>
-                    <button class="operation-btn" data-operation="draw-shapes">Draw Shapes</button>
-                    <button class="operation-btn" data-operation="add-text">Add Text</button>
+                    <div class="section-title">
+                        <span class="section-icon">✏️</span>
+                        Drawing & Shapes
+                    </div>
+                    <button class="operation-btn" data-operation="draw-shapes">
+                        <span class="btn-icon">🔷</span>
+                        Draw Shapes
+                        <span class="btn-arrow">→</span>
+                    </button>
+                    <button class="operation-btn" data-operation="add-text">
+                        <span class="btn-icon">📝</span>
+                        Add Text
+                        <span class="btn-arrow">→</span>
+                    </button>
                 </div>
 
-                <!-- Topic 5: Transformations -->
+                <!-- Transformations -->
                 <div class="operation-group">
-                    <div class="section-title">Transformations</div>
-                    <button class="operation-btn" data-operation="translate">Translation</button>
-                    <button class="operation-btn" data-operation="rotate">Rotation</button>
-                    <button class="operation-btn" data-operation="flip">Flip Image</button>
+                    <div class="section-title">
+                        <span class="section-icon">🔄</span>
+                        Transformations
+                    </div>
+                    <button class="operation-btn" data-operation="translate">
+                        <span class="btn-icon">📐</span>
+                        Translation
+                        <span class="btn-arrow">→</span>
+                    </button>
+                    <button class="operation-btn" data-operation="rotate">
+                        <span class="btn-icon">🔄</span>
+                        Rotation
+                        <span class="btn-arrow">→</span>
+                    </button>
+                    <button class="operation-btn" data-operation="flip">
+                        <span class="btn-icon">🔀</span>
+                        Flip Image
+                        <span class="btn-arrow">→</span>
+                    </button>
                 </div>
 
-                <!-- Topic 6: Scaling & Resizing -->
+                <!-- Scaling & Resizing -->
                 <div class="operation-group">
-                    <div class="section-title">Scaling & Resizing</div>
-                    <button class="operation-btn" data-operation="resize">Resize Image</button>
-                    <button class="operation-btn" data-operation="pyramid">Image Pyramid</button>
-                    <button class="operation-btn" data-operation="crop">Crop Image</button>
+                    <div class="section-title">
+                        <span class="section-icon">📏</span>
+                        Scaling & Resizing
+                    </div>
+                    <button class="operation-btn" data-operation="resize">
+                        <span class="btn-icon">🔍</span>
+                        Resize Image
+                        <span class="btn-arrow">→</span>
+                    </button>
+                    <button class="operation-btn" data-operation="pyramid">
+                        <span class="btn-icon">🏔️</span>
+                        Image Pyramid
+                        <span class="btn-arrow">→</span>
+                    </button>
+                    <button class="operation-btn" data-operation="crop">
+                        <span class="btn-icon">✂️</span>
+                        Crop Image
+                        <span class="btn-arrow">→</span>
+                    </button>
                 </div>
 
-                <!-- Topic 7: Arithmetic & Bitwise -->
+                <!-- Arithmetic & Bitwise -->
                 <div class="operation-group">
-                    <div class="section-title">Arithmetic & Bitwise</div>
-                    <button class="operation-btn" data-operation="arithmetic">Arithmetic Ops</button>
-                    <button class="operation-btn" data-operation="bitwise">Bitwise Ops</button>
+                    <div class="section-title">
+                        <span class="section-icon">🧮</span>
+                        Arithmetic & Bitwise
+                    </div>
+                    <button class="operation-btn" data-operation="arithmetic">
+                        <span class="btn-icon">➕</span>
+                        Arithmetic Ops
+                        <span class="btn-arrow">→</span>
+                    </button>
+                    <button class="operation-btn" data-operation="bitwise">
+                        <span class="btn-icon">⚡</span>
+                        Bitwise Ops
+                        <span class="btn-arrow">→</span>
+                    </button>
                 </div>
 
-                <!-- Topic 8: Filtering -->
+                <!-- Filtering -->
                 <div class="operation-group">
-                    <div class="section-title">Filtering & Enhancement</div>
-                    <button class="operation-btn" data-operation="blur">Blur Effects</button>
-                    <button class="operation-btn" data-operation="sharpen">Sharpen Image</button>
-                    <button class="operation-btn" data-operation="denoise">Denoise</button>
+                    <div class="section-title">
+                        <span class="section-icon">✨</span>
+                        Filtering & Enhancement
+                    </div>
+                    <button class="operation-btn" data-operation="blur">
+                        <span class="btn-icon">🌀</span>
+                        Blur Effects
+                        <span class="btn-arrow">→</span>
+                    </button>
+                    <button class="operation-btn" data-operation="sharpen">
+                        <span class="btn-icon">🔪</span>
+                        Sharpen Image
+                        <span class="btn-arrow">→</span>
+                    </button>
+                    <button class="operation-btn" data-operation="denoise">
+                        <span class="btn-icon">🧹</span>
+                        Denoise
+                        <span class="btn-arrow">→</span>
+                    </button>
                 </div>
 
-                <!-- Topic 9: Thresholding -->
+                <!-- Thresholding -->
                 <div class="operation-group">
-                    <div class="section-title">Thresholding</div>
-                    <button class="operation-btn" data-operation="threshold">Binary Threshold</button>
-                    <button class="operation-btn" data-operation="adaptive-threshold">Adaptive Threshold</button>
+                    <div class="section-title">
+                        <span class="section-icon">⚖️</span>
+                        Thresholding
+                    </div>
+                    <button class="operation-btn" data-operation="threshold">
+                        <span class="btn-icon">⚫</span>
+                        Binary Threshold
+                        <span class="btn-arrow">→</span>
+                    </button>
+                    <button class="operation-btn" data-operation="adaptive-threshold">
+                        <span class="btn-icon">🎛️</span>
+                        Adaptive Threshold
+                        <span class="btn-arrow">→</span>
+                    </button>
                 </div>
 
-                <!-- Topic 10: Morphology & Edge Detection -->
+                <!-- Morphology & Edge Detection -->
                 <div class="operation-group">
-                    <div class="section-title">Morphology & Edges</div>
-                    <button class="operation-btn" data-operation="dilation">Dilation</button>
-                    <button class="operation-btn" data-operation="erosion">Erosion</button>
-                    <button class="operation-btn" data-operation="opening">Opening</button>
-                    <button class="operation-btn" data-operation="closing">Closing</button>
-                    <button class="operation-btn" data-operation="edge-detection">Canny Edge Detection</button>
+                    <div class="section-title">
+                        <span class="section-icon">🔍</span>
+                        Morphology & Edges
+                    </div>
+                    <button class="operation-btn" data-operation="dilation">
+                        <span class="btn-icon">📈</span>
+                        Dilation
+                        <span class="btn-arrow">→</span>
+                    </button>
+                    <button class="operation-btn" data-operation="erosion">
+                        <span class="btn-icon">📉</span>
+                        Erosion
+                        <span class="btn-arrow">→</span>
+                    </button>
+                    <button class="operation-btn" data-operation="opening">
+                        <span class="btn-icon">🌅</span>
+                        Opening
+                        <span class="btn-arrow">→</span>
+                    </button>
+                    <button class="operation-btn" data-operation="closing">
+                        <span class="btn-icon">🌄</span>
+                        Closing
+                        <span class="btn-arrow">→</span>
+                    </button>
+                    <button class="operation-btn" data-operation="edge-detection">
+                        <span class="btn-icon">🔍</span>
+                        Canny Edge Detection
+                        <span class="btn-arrow">→</span>
+                    </button>
                 </div>
             </div>
         </div>
 
         <!-- Main Content -->
         <div class="main-content">
+            <!-- Header -->
+            <div class="header">
+                <div class="header-left">
+                    <div class="breadcrumb">
+                        <span class="breadcrumb-item">Dashboard</span>
+                        <span class="breadcrumb-separator">›</span>
+                        <span class="breadcrumb-item active">Image Processing</span>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <div class="status-indicator">
+                        <div class="status-dot online"></div>
+                        <span id="backendStatus">Connected</span>
+                    </div>
+                </div>
+            </div>
+
             <!-- Toolbar -->
             <div class="toolbar">
-                <div class="file-input-wrapper">
-                    <input type="file" id="imageInput" class="file-input" accept="image/*">
-                    <button class="file-input-btn" onclick="document.getElementById('imageInput').click()">Load Image</button>
+                <div class="toolbar-left">
+                    <div class="file-input-wrapper">
+                        <input type="file" id="imageInput" class="file-input" accept="image/*">
+                        <button class="btn btn-primary" onclick="document.getElementById('imageInput').click()">
+                            <span class="btn-icon">📁</span>
+                            Load Image
+                        </button>
+                    </div>
+                    <button class="btn btn-secondary" onclick="openBatchModal()">
+                        <span class="btn-icon">📚</span>
+                        Batch Process
+                    </button>
                 </div>
-                <button class="batch-btn" onclick="openBatchModal()">Batch Process</button>
-                <button class="export-btn" onclick="exportResults()">Export Results</button>
-                <div style="margin-left: auto; font-size: 14px; color: #555;">
-                    Backend: <span id="backendStatus">Connecting...</span>
-                </div>
-            </div>
-
-            <!-- Image Display Area -->
-            <div class="image-container">
-                <div class="image-panel">
-                    <h3>Original Image</h3>
-                    <div class="image-display" id="originalImage">
-                        <div class="placeholder-text">Load an image to get started<br>Supports JPG, PNG, BMP, TIFF formats</div>
-                    </div>
-                    <div class="image-info" id="originalInfo">
-                        No image loaded
-                    </div>
-                </div>
-
-                <div class="image-panel">
-                    <h3>Processed Image</h3>
-                    <div class="image-display" id="processedImage">
-                        <div class="placeholder-text">Select an operation from the sidebar<br>to see the processed result</div>
-                    </div>
-                    <div class="image-info" id="processedInfo">
-                        No processing applied
-                    </div>
+                <div class="toolbar-right">
+                    <button class="btn btn-success" onclick="exportResults()">
+                        <span class="btn-icon">💾</span>
+                        Export Results
+                    </button>
                 </div>
             </div>
 
-            <!-- Dynamic Controls Panel -->
-            <div class="controls-panel" id="controlsPanel">
-                <div id="controlsContent">
-                    <!-- Dynamic controls will be inserted here -->
+            <!-- Image Workspace -->
+            <div class="workspace">
+                <div class="image-container">
+                    <div class="image-panel">
+                        <div class="panel-header">
+                            <h3>Original Image</h3>
+                            <div class="panel-actions">
+                                <button class="icon-btn">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                        <polyline points="7,10 12,15 17,10"/>
+                                        <line x1="12" y1="15" x2="12" y2="3"/>
+                                    </svg>
+                                </button>
+                                <button class="icon-btn">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                        <circle cx="12" cy="12" r="3"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="image-display" id="originalImage">
+                            <div class="placeholder-content">
+                                <div class="placeholder-icon">
+                                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                                        <circle cx="8.5" cy="8.5" r="1.5"/>
+                                        <polyline points="21,15 16,10 5,21"/>
+                                    </svg>
+                                </div>
+                                <h4>Load an image to get started</h4>
+                                <p>Supports JPG, PNG, BMP, TIFF formats</p>
+                                <button class="btn btn-outline" onclick="document.getElementById('imageInput').click()">
+                                    Choose File
+                                </button>
+                            </div>
+                        </div>
+                        <div class="image-info" id="originalInfo">
+                            <div class="info-grid">
+                                <div class="info-item">
+                                    <span class="info-label">Status</span>
+                                    <span class="info-value">No image loaded</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="image-panel">
+                        <div class="panel-header">
+                            <h3>Processed Image</h3>
+                            <div class="panel-actions">
+                                <button class="icon-btn">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                        <polyline points="7,10 12,15 17,10"/>
+                                        <line x1="12" y1="15" x2="12" y2="3"/>
+                                    </svg>
+                                </button>
+                                <button class="icon-btn">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                        <circle cx="12" cy="12" r="3"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="image-display" id="processedImage">
+                            <div class="placeholder-content">
+                                <div class="placeholder-icon">
+                                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                        <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+                                    </svg>
+                                </div>
+                                <h4>Select an operation</h4>
+                                <p>Choose a processing operation from the sidebar to see results</p>
+                            </div>
+                        </div>
+                        <div class="image-info" id="processedInfo">
+                            <div class="info-grid">
+                                <div class="info-item">
+                                    <span class="info-label">Status</span>
+                                    <span class="info-value">No processing applied</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dynamic Controls Panel -->
+                <div class="controls-panel" id="controlsPanel">
+                    <div class="controls-header">
+                        <h4>Processing Controls</h4>
+                        <button class="icon-btn" onclick="closeControls()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="18" y1="6" x2="6" y2="18"/>
+                                <line x1="6" y1="6" x2="18" y2="18"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="controls-content" id="controlsContent">
+                        <!-- Dynamic controls will be inserted here -->
+                    </div>
                 </div>
             </div>
         </div>
@@ -144,41 +390,64 @@
 
     <!-- Status Bar -->
     <div class="status-bar">
-        <div id="statusText">Ready</div>
-        <div class="progress-bar">
-            <div class="progress-fill" id="progressFill"></div>
+        <div class="status-left">
+            <span id="statusText">Ready</span>
         </div>
-        <div id="imageCount">No images loaded</div>
+        <div class="status-center">
+            <div class="progress-container">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <span class="progress-text">0%</span>
+            </div>
+        </div>
+        <div class="status-right">
+            <span id="imageCount">No images loaded</span>
+        </div>
     </div>
 
     <!-- Batch Processing Modal -->
-    <div class="batch-modal" id="batchModal">
-        <div class="modal-content">
-            <button class="close-modal" onclick="closeBatchModal()">&times;</button>
+    <div class="modal-overlay" id="batchModal">
+        <div class="modal">
             <div class="modal-header">
                 <h2>Batch Processing</h2>
-                <p>Process multiple images with the same operation</p>
-            </div>
-            
-            <div class="file-drop-zone" id="dropZone">
-                <p>Drop images here or click to select</p>
-                <p style="font-size: 12px; color: #7f8c8d; margin-top: 10px;">Supports JPG, PNG, BMP, TIFF</p>
-            </div>
-            
-            <input type="file" id="batchInput" multiple accept="image/*" style="display: none;">
-            
-            <div class="file-list" id="batchFileList">
-                <!-- Batch files will be listed here -->
-            </div>
-            
-            <div style="text-align: center;">
-                <button class="operation-btn" onclick="startBatchProcessing()" style="width: auto; padding: 12px 30px;">
-                    Start Processing
+                <button class="icon-btn" onclick="closeBatchModal()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
                 </button>
+            </div>
+            
+            <div class="modal-body">
+                <p class="modal-description">Process multiple images with the same operation</p>
+                
+                <div class="file-drop-zone" id="dropZone" ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragenter="handleDragEnter(event)" ondragleave="handleDragLeave(event)">
+                    <div class="drop-zone-content">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="7,10 12,15 17,10"/>
+                            <line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                        <h4>Drop images here</h4>
+                        <p>or <button class="link-btn" onclick="document.getElementById('batchInput').click()">click to select</button></p>
+                        <span class="file-types">Supports JPG, PNG, BMP, TIFF</span>
+                    </div>
+                </div>
+                
+                <input type="file" id="batchInput" multiple accept="image/*" style="display: none;">
+                
+                <div class="file-list" id="batchFileList">
+                    <!-- Batch files will be listed here -->
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeBatchModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="startBatchProcessing()">Start Processing</button>
             </div>
         </div>
     </div>
-
     <script>
         // Global variables
         let currentImage = null;
