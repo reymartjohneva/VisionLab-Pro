@@ -1,0 +1,1367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenCV Image Processing Studio</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .app-container {
+            display: flex;
+            height: 100vh;
+            backdrop-filter: blur(10px);
+        }
+
+        .sidebar {
+            width: 320px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(255, 255, 255, 0.2);
+            overflow-y: auto;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: white;
+            text-align: center;
+        }
+
+        .sidebar-header h1 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .sidebar-header p {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        .operations-section {
+            padding: 15px;
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 5px;
+        }
+
+        .operation-group {
+            margin-bottom: 20px;
+        }
+
+        .operation-btn {
+            width: 100%;
+            padding: 10px 15px;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .operation-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
+        }
+
+        .operation-btn:active {
+            transform: translateY(0);
+        }
+
+        .operation-btn.active {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            box-shadow: 0 5px 15px rgba(231, 76, 60, 0.4);
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .toolbar {
+            padding: 15px 20px;
+            background: rgba(255, 255, 255, 0.95);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            backdrop-filter: blur(20px);
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+
+        .file-input {
+            position: absolute;
+            left: -9999px;
+        }
+
+        .file-input-btn {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #27ae60, #229954);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .file-input-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(39, 174, 96, 0.4);
+        }
+
+        .batch-btn, .export-btn {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .batch-btn:hover, .export-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(243, 156, 18, 0.4);
+        }
+
+        .image-container {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            gap: 20px;
+            overflow: auto;
+        }
+
+        .image-panel {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .image-panel h3 {
+            margin-bottom: 15px;
+            color: #2c3e50;
+            font-size: 16px;
+            text-align: center;
+        }
+
+        .image-display {
+            width: 100%;
+            height: 400px;
+            border: 2px dashed #bdc3c7;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f8f9fa;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .image-display img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+
+        .placeholder-text {
+            color: #7f8c8d;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .image-info {
+            margin-top: 15px;
+            padding: 10px;
+            background: rgba(52, 152, 219, 0.1);
+            border-radius: 8px;
+            font-size: 12px;
+            color: #2c3e50;
+        }
+
+        .controls-panel {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 0 20px 20px 20px;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            display: none;
+        }
+
+        .controls-panel.active {
+            display: block;
+        }
+
+        .control-group {
+            margin-bottom: 15px;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #2c3e50;
+        }
+
+        .control-group input[type="range"] {
+            width: 100%;
+            height: 5px;
+            border-radius: 5px;
+            background: #ddd;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .control-group input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #3498db;
+            cursor: pointer;
+        }
+
+        .control-group select, .control-group input[type="number"] {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .status-bar {
+            padding: 10px 20px;
+            background: rgba(44, 62, 80, 0.95);
+            color: white;
+            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(20px);
+        }
+
+        .progress-bar {
+            width: 200px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3498db, #2ecc71);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .batch-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .batch-modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .modal-header {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .modal-header h2 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .file-drop-zone {
+            border: 2px dashed #3498db;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .file-drop-zone:hover {
+            border-color: #2980b9;
+            background: rgba(52, 152, 219, 0.05);
+        }
+
+        .file-list {
+            max-height: 200px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            margin-bottom: 5px;
+            font-size: 12px;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #7f8c8d;
+        }
+
+        .processing {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .error-message {
+            background: #e74c3c;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            text-align: center;
+        }
+
+        .success-message {
+            background: #27ae60;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h1>OpenCV Processing Studio</h1>
+                <p>Professional Image Processing Tools</p>
+            </div>
+            
+            <div class="operations-section">
+                <!-- Topic 1: Getting Started -->
+                <div class="operation-group">
+                    <div class="section-title">Getting Started</div>
+                    <button class="operation-btn" data-operation="dimensions">Show Dimensions</button>
+                </div>
+
+                <!-- Topic 2: Grayscaling -->
+                <div class="operation-group">
+                    <div class="section-title">Grayscaling</div>
+                    <button class="operation-btn" data-operation="grayscale">Convert to Grayscale</button>
+                    <button class="operation-btn" data-operation="compare-dimensions">Compare Dimensions</button>
+                </div>
+
+                <!-- Topic 3: Color Spaces -->
+                <div class="operation-group">
+                    <div class="section-title">Color Spaces</div>
+                    <button class="operation-btn" data-operation="rgb-channels">RGB Channels</button>
+                    <button class="operation-btn" data-operation="hsv-convert">HSV Conversion</button>
+                    <button class="operation-btn" data-operation="color-manipulation">Color Manipulation</button>
+                </div>
+
+                <!-- Topic 4: Drawing & Shapes -->
+                <div class="operation-group">
+                    <div class="section-title">Drawing & Shapes</div>
+                    <button class="operation-btn" data-operation="draw-shapes">Draw Shapes</button>
+                    <button class="operation-btn" data-operation="add-text">Add Text</button>
+                </div>
+
+                <!-- Topic 5: Transformations -->
+                <div class="operation-group">
+                    <div class="section-title">Transformations</div>
+                    <button class="operation-btn" data-operation="translate">Translation</button>
+                    <button class="operation-btn" data-operation="rotate">Rotation</button>
+                    <button class="operation-btn" data-operation="flip">Flip Image</button>
+                </div>
+
+                <!-- Topic 6: Scaling & Resizing -->
+                <div class="operation-group">
+                    <div class="section-title">Scaling & Resizing</div>
+                    <button class="operation-btn" data-operation="resize">Resize Image</button>
+                    <button class="operation-btn" data-operation="pyramid">Image Pyramid</button>
+                    <button class="operation-btn" data-operation="crop">Crop Image</button>
+                </div>
+
+                <!-- Topic 7: Arithmetic & Bitwise -->
+                <div class="operation-group">
+                    <div class="section-title">Arithmetic & Bitwise</div>
+                    <button class="operation-btn" data-operation="arithmetic">Arithmetic Ops</button>
+                    <button class="operation-btn" data-operation="bitwise">Bitwise Ops</button>
+                </div>
+
+                <!-- Topic 8: Filtering -->
+                <div class="operation-group">
+                    <div class="section-title">Filtering & Enhancement</div>
+                    <button class="operation-btn" data-operation="blur">Blur Effects</button>
+                    <button class="operation-btn" data-operation="sharpen">Sharpen Image</button>
+                    <button class="operation-btn" data-operation="denoise">Denoise</button>
+                </div>
+
+                <!-- Topic 9: Thresholding -->
+                <div class="operation-group">
+                    <div class="section-title">Thresholding</div>
+                    <button class="operation-btn" data-operation="threshold">Binary Threshold</button>
+                    <button class="operation-btn" data-operation="adaptive-threshold">Adaptive Threshold</button>
+                </div>
+
+                <!-- Topic 10: Morphology & Edge Detection -->
+                <div class="operation-group">
+                    <div class="section-title">Morphology & Edges</div>
+                    <button class="operation-btn" data-operation="dilation">Dilation</button>
+                    <button class="operation-btn" data-operation="erosion">Erosion</button>
+                    <button class="operation-btn" data-operation="opening">Opening</button>
+                    <button class="operation-btn" data-operation="closing">Closing</button>
+                    <button class="operation-btn" data-operation="edge-detection">Canny Edge Detection</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Toolbar -->
+            <div class="toolbar">
+                <div class="file-input-wrapper">
+                    <input type="file" id="imageInput" class="file-input" accept="image/*">
+                    <button class="file-input-btn" onclick="document.getElementById('imageInput').click()">Load Image</button>
+                </div>
+                <button class="batch-btn" onclick="openBatchModal()">Batch Process</button>
+                <button class="export-btn" onclick="exportResults()">Export Results</button>
+                <div style="margin-left: auto; font-size: 14px; color: #555;">
+                    Backend: <span id="backendStatus">Connecting...</span>
+                </div>
+            </div>
+
+            <!-- Image Display Area -->
+            <div class="image-container">
+                <div class="image-panel">
+                    <h3>Original Image</h3>
+                    <div class="image-display" id="originalImage">
+                        <div class="placeholder-text">Load an image to get started<br>Supports JPG, PNG, BMP, TIFF formats</div>
+                    </div>
+                    <div class="image-info" id="originalInfo">
+                        No image loaded
+                    </div>
+                </div>
+
+                <div class="image-panel">
+                    <h3>Processed Image</h3>
+                    <div class="image-display" id="processedImage">
+                        <div class="placeholder-text">Select an operation from the sidebar<br>to see the processed result</div>
+                    </div>
+                    <div class="image-info" id="processedInfo">
+                        No processing applied
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dynamic Controls Panel -->
+            <div class="controls-panel" id="controlsPanel">
+                <div id="controlsContent">
+                    <!-- Dynamic controls will be inserted here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Bar -->
+    <div class="status-bar">
+        <div id="statusText">Ready</div>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div id="imageCount">No images loaded</div>
+    </div>
+
+    <!-- Batch Processing Modal -->
+    <div class="batch-modal" id="batchModal">
+        <div class="modal-content">
+            <button class="close-modal" onclick="closeBatchModal()">&times;</button>
+            <div class="modal-header">
+                <h2>Batch Processing</h2>
+                <p>Process multiple images with the same operation</p>
+            </div>
+            
+            <div class="file-drop-zone" id="dropZone">
+                <p>Drop images here or click to select</p>
+                <p style="font-size: 12px; color: #7f8c8d; margin-top: 10px;">Supports JPG, PNG, BMP, TIFF</p>
+            </div>
+            
+            <input type="file" id="batchInput" multiple accept="image/*" style="display: none;">
+            
+            <div class="file-list" id="batchFileList">
+                <!-- Batch files will be listed here -->
+            </div>
+            
+            <div style="text-align: center;">
+                <button class="operation-btn" onclick="startBatchProcessing()" style="width: auto; padding: 12px 30px;">
+                    Start Processing
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentImage = null;
+        let processedImage = null;
+        let currentOperation = null;
+        let batchFiles = [];
+        let BACKEND_URL = 'http://localhost:8000';
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            setupEventListeners();
+            checkBackendConnection();
+            updateStatus('Application ready');
+        });
+
+        function setupEventListeners() {
+            // Image input handler
+            document.getElementById('imageInput').addEventListener('change', handleImageLoad);
+            
+            // Operation buttons
+            document.querySelectorAll('.operation-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const operation = this.dataset.operation;
+                    selectOperation(operation, this);
+                });
+            });
+
+            // Batch modal setup
+            setupBatchModal();
+        }
+
+        async function checkBackendConnection() {
+            try {
+                const response = await fetch(`${BACKEND_URL}/health`);
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('backendStatus').textContent = `Connected (OpenCV ${data.opencv_version})`;
+                    document.getElementById('backendStatus').style.color = '#27ae60';
+                } else {
+                    throw new Error('Backend not responding');
+                }
+            } catch (error) {
+                document.getElementById('backendStatus').textContent = 'Disconnected';
+                document.getElementById('backendStatus').style.color = '#e74c3c';
+                console.warn('Backend connection failed:', error);
+            }
+        }
+
+        function handleImageLoad(event) {
+            const file = event.target.files[0];
+            if (file) {
+                loadImage(file);
+                updateImageCount(1);
+            }
+        }
+
+        function loadImage(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                currentImage = e.target.result;
+                displayImage('originalImage', currentImage);
+                updateImageInfo('originalInfo', file);
+                updateStatus(`Loaded: ${file.name}`);
+                
+                // Reset processed image
+                clearProcessedImage();
+                
+                // Reset active operations
+                document.querySelectorAll('.operation-btn').forEach(btn => btn.classList.remove('active'));
+                document.getElementById('controlsPanel').classList.remove('active');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function displayImage(containerId, imageSrc) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = `<img src="${imageSrc}" alt="Image">`;
+        }
+
+        function clearProcessedImage() {
+            const container = document.getElementById('processedImage');
+            container.innerHTML = '<div class="placeholder-text">Select an operation to process the image</div>';
+            document.getElementById('processedInfo').textContent = 'No processing applied';
+        }
+
+        function updateImageInfo(infoId, file) {
+            const info = document.getElementById(infoId);
+            const img = new Image();
+            img.onload = function() {
+                info.innerHTML = `
+                    <strong>File:</strong> ${file.name}<br>
+                    <strong>Size:</strong> ${(file.size / 1024).toFixed(1)} KB<br>
+                    <strong>Dimensions:</strong> ${img.width} × ${img.height} pixels<br>
+                    <strong>Type:</strong> ${file.type}
+                `;
+            };
+            img.src = URL.createObjectURL(file);
+        }
+
+        function selectOperation(operation, buttonElement) {
+            if (!currentImage) {
+                showMessage('Please load an image first!', 'error');
+                return;
+            }
+
+            // Update active button
+            document.querySelectorAll('.operation-btn').forEach(btn => btn.classList.remove('active'));
+            buttonElement.classList.add('active');
+
+            currentOperation = operation;
+            showControls(operation);
+            processImage(operation);
+        }
+
+        function showControls(operation) {
+            const controlsPanel = document.getElementById('controlsPanel');
+            const controlsContent = document.getElementById('controlsContent');
+            
+            // Generate controls based on operation
+            let controlsHTML = `<h3>Controls: ${operation.replace(/-/g, ' ').toUpperCase()}</h3>`;
+            
+            switch(operation) {
+                case 'rotate':
+                    controlsHTML += `
+                        <div class="control-group">
+                            <label>Rotation Angle: <span id="rotateValue">45</span>°</label>
+                            <input type="range" id="rotateSlider" min="0" max="360" value="45" 
+                                   oninput="updateRotation(this.value)">
+                        </div>
+                        <div class="control-group">
+                            <label>Scale Factor: <span id="scaleValue">1.0</span></label>
+                            <input type="range" id="scaleSlider" min="0.1" max="2.0" value="1.0" step="0.1"
+                                   oninput="updateRotation()">
+                        </div>
+                    `;
+                    break;
+                case 'blur':
+                    controlsHTML += `
+                        <div class="control-group">
+                            <label>Blur Type</label>
+                            <select id="blurType" onchange="updateBlur()">
+                                <option value="gaussian">Gaussian Blur</option>
+                                <option value="motion">Motion Blur</option>
+                                <option value="median">Median Filter</option>
+                                <option value="bilateral">Bilateral Filter</option>
+                            </select>
+                        </div>
+                        <div class="control-group">
+                            <label>Kernel Size: <span id="blurValue">15</span></label>
+                            <input type="range" id="blurSlider" min="3" max="31" value="15" step="2"
+                                   oninput="updateBlur()">
+                        </div>
+                    `;
+                    break;
+                case 'threshold':
+                    controlsHTML += `
+                        <div class="control-group">
+                            <label>Threshold Value: <span id="threshValue">127</span></label>
+                            <input type="range" id="threshSlider" min="0" max="255" value="127"
+                                   oninput="updateThreshold(this.value)">
+                        </div>
+                        <div class="control-group">
+                            <label>Threshold Type</label>
+                            <select id="threshType" onchange="updateThreshold()">
+                                <option value="binary">Binary</option>
+                                <option value="binary_inv">Binary Inverted</option>
+                                <option value="trunc">Truncate</option>
+                                <option value="tozero">To Zero</option>
+                                <option value="tozero_inv">To Zero Inverted</option>
+                            </select>
+                        </div>
+                    `;
+                    break;
+                case 'resize':
+                    controlsHTML += `
+                        <div class="control-group">
+                            <label>Scale Factor: <span id="scaleResizeValue">0.5</span>x</label>
+                            <input type="range" id="scaleResizeSlider" min="0.1" max="2.0" value="0.5" step="0.1"
+                                   oninput="updateResize(this.value)">
+                        </div>
+                        <div class="control-group">
+                            <label>Interpolation Method</label>
+                            <select id="interpMethod" onchange="updateResize()">
+                                <option value="linear">Linear</option>
+                                <option value="cubic">Cubic</option>
+                                <option value="nearest">Nearest Neighbor</option>
+                                <option value="lanczos">Lanczos</option>
+                            </select>
+                        </div>
+                    `;
+                    break;
+                case 'edge-detection':
+                    controlsHTML += `
+                        <div class="control-group">
+                            <label>Lower Threshold: <span id="edgeLowValue">50</span></label>
+                            <input type="range" id="edgeLowSlider" min="0" max="255" value="50"
+                                   oninput="updateEdgeDetection()">
+                        </div>
+                        <div class="control-group">
+                            <label>Upper Threshold: <span id="edgeHighValue">150</span></label>
+                            <input type="range" id="edgeHighSlider" min="0" max="255" value="150"
+                                   oninput="updateEdgeDetection()">
+                        </div>
+                    `;
+                    break;
+                case 'color-manipulation':
+                    controlsHTML += `
+                        <div class="control-group">
+                            <label>Hue Shift: <span id="hueValue">0</span></label>
+                            <input type="range" id="hueSlider" min="-180" max="180" value="0"
+                                   oninput="updateColorManipulation()">
+                        </div>
+                        <div class="control-group">
+                            <label>Saturation: <span id="satValue">1.0</span></label>
+                            <input type="range" id="satSlider" min="0" max="3" value="1.0" step="0.1"
+                                   oninput="updateColorManipulation()">
+                        </div>
+                        <div class="control-group">
+                            <label>Value/Brightness: <span id="valValue">1.0</span></label>
+                            <input type="range" id="valSlider" min="0" max="3" value="1.0" step="0.1"
+                                   oninput="updateColorManipulation()">
+                        </div>
+                    `;
+                    break;
+                case 'crop':
+                    controlsHTML += `
+                        <div class="control-group">
+                            <label>X Position: <span id="cropXValue">100</span></label>
+                            <input type="range" id="cropXSlider" min="0" max="500" value="100"
+                                   oninput="updateCrop()">
+                        </div>
+                        <div class="control-group">
+                            <label>Y Position: <span id="cropYValue">100</span></label>
+                            <input type="range" id="cropYSlider" min="0" max="500" value="100"
+                                   oninput="updateCrop()">
+                        </div>
+                        <div class="control-group">
+                            <label>Width: <span id="cropWValue">200</span></label>
+                            <input type="range" id="cropWSlider" min="50" max="400" value="200"
+                                   oninput="updateCrop()">
+                        </div>
+                        <div class="control-group">
+                            <label>Height: <span id="cropHValue">200</span></label>
+                            <input type="range" id="cropHSlider" min="50" max="400" value="200"
+                                   oninput="updateCrop()">
+                        </div>
+                    `;
+                    break;
+                case 'arithmetic':
+                    controlsHTML += `
+                        <div class="control-group">
+                            <label>Operation</label>
+                            <select id="arithmeticOp" onchange="updateArithmetic()">
+                                <option value="add">Add</option>
+                                <option value="subtract">Subtract</option>
+                                <option value="multiply">Multiply</option>
+                                <option value="divide">Divide</option>
+                            </select>
+                        </div>
+                        <div class="control-group">
+                            <label>Value: <span id="arithmeticValue">50</span></label>
+                            <input type="range" id="arithmeticSlider" min="1" max="200" value="50"
+                                   oninput="updateArithmetic()">
+                        </div>
+                    `;
+                    break;
+                case 'bitwise':
+                    controlsHTML += `
+                        <div class="control-group">
+                            <label>Operation</label>
+                            <select id="bitwiseOp" onchange="updateBitwise()">
+                                <option value="and">AND</option>
+                                <option value="or">OR</option>
+                                <option value="xor">XOR</option>
+                                <option value="not">NOT</option>
+                            </select>
+                        </div>
+                        <div class="control-group">
+                            <label>Mask Type</label>
+                            <select id="maskType" onchange="updateBitwise()">
+                                <option value="circular">Circular</option>
+                                <option value="rectangular">Rectangular</option>
+                                <option value="full">Full</option>
+                            </select>
+                        </div>
+                    `;
+                    break;
+                case 'dilation':
+                case 'erosion':
+                case 'opening':
+                case 'closing':
+                    controlsHTML += `
+                        <div class="control-group">
+                            <label>Kernel Size: <span id="morphKernelValue">5</span></label>
+                            <input type="range" id="morphKernelSlider" min="3" max="15" value="5" step="2"
+                                   oninput="updateMorphology()">
+                        </div>
+                        <div class="control-group">
+                            <label>Iterations: <span id="morphIterValue">1</span></label>
+                            <input type="range" id="morphIterSlider" min="1" max="5" value="1"
+                                   oninput="updateMorphology()">
+                        </div>
+                    `;
+                    break;
+                default:
+                    controlsHTML += '<p>No additional controls needed for this operation.</p>';
+            }
+
+            controlsContent.innerHTML = controlsHTML;
+            controlsPanel.classList.add('active');
+        }
+
+        async function processImage(operation) {
+            if (!currentImage) return;
+            
+            updateStatus(`Processing: ${operation}...`);
+            showProgress(30);
+            
+            // Add processing visual feedback
+            document.getElementById('processedImage').classList.add('processing');
+
+            try {
+                // Convert image to base64 for API
+                const base64Data = currentImage.split(',')[1];
+                
+                // Prepare form data
+                const formData = new FormData();
+                formData.append('image_data', base64Data);
+                
+                // Add operation-specific parameters
+                addOperationParameters(formData, operation);
+                
+                // Make API call
+                const response = await fetch(`${BACKEND_URL}/api/${operation}`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                
+                // Display processed image
+                if (result.processed_image) {
+                    processedImage = `data:image/png;base64,${result.processed_image}`;
+                    displayImage('processedImage', processedImage);
+                } else if (result.red_channel && result.green_channel && result.blue_channel) {
+                    // Handle RGB channel extraction
+                    displayMultipleImages(result);
+                } else if (result.hsv_image) {
+                    // Handle HSV conversion
+                    displayImage('processedImage', `data:image/png;base64,${result.hsv_image}`);
+                }
+                
+                updateProcessedInfo(operation, result);
+                showProgress(100);
+                showMessage('Processing complete!', 'success');
+                
+                setTimeout(() => {
+                    updateStatus('Ready');
+                    showProgress(0);
+                }, 1000);
+
+            } catch (error) {
+                console.error('Processing error:', error);
+                updateStatus(`Error: ${error.message}`);
+                showProgress(0);
+                showMessage(`Error: ${error.message}`, 'error');
+                
+                // Clear processing state
+                document.getElementById('processedImage').innerHTML = 
+                    '<div class="placeholder-text">Processing failed. Check backend connection.</div>';
+            } finally {
+                document.getElementById('processedImage').classList.remove('processing');
+            }
+        }
+
+        function addOperationParameters(formData, operation) {
+            switch(operation) {
+                case 'rotate':
+                    const angle = document.getElementById('rotateSlider')?.value || 45;
+                    const scale = document.getElementById('scaleSlider')?.value || 1.0;
+                    formData.append('angle', angle);
+                    formData.append('scale', scale);
+                    break;
+                case 'blur':
+                    const blurType = document.getElementById('blurType')?.value || 'gaussian';
+                    const kernelSize = document.getElementById('blurSlider')?.value || 15;
+                    formData.append('blur_type', blurType);
+                    formData.append('kernel_size', kernelSize);
+                    break;
+                case 'threshold':
+                    const threshValue = document.getElementById('threshSlider')?.value || 127;
+                    const threshType = document.getElementById('threshType')?.value || 'binary';
+                    formData.append('threshold_value', threshValue);
+                    formData.append('threshold_type', threshType);
+                    formData.append('max_value', 255);
+                    break;
+                case 'resize':
+                    const scaleFactor = document.getElementById('scaleResizeSlider')?.value || 0.5;
+                    const interpMethod = document.getElementById('interpMethod')?.value || 'linear';
+                    formData.append('scale_factor', scaleFactor);
+                    formData.append('interpolation', interpMethod);
+                    break;
+                case 'edge-detection':
+                    const lowThresh = document.getElementById('edgeLowSlider')?.value || 50;
+                    const highThresh = document.getElementById('edgeHighSlider')?.value || 150;
+                    formData.append('low_threshold', lowThresh);
+                    formData.append('high_threshold', highThresh);
+                    break;
+                case 'color-manipulation':
+                    const hueShift = document.getElementById('hueSlider')?.value || 0;
+                    const satFactor = document.getElementById('satSlider')?.value || 1.0;
+                    const valFactor = document.getElementById('valSlider')?.value || 1.0;
+                    formData.append('hue_shift', hueShift);
+                    formData.append('saturation_factor', satFactor);
+                    formData.append('value_factor', valFactor);
+                    break;
+                case 'crop':
+                    const x = document.getElementById('cropXSlider')?.value || 100;
+                    const y = document.getElementById('cropYSlider')?.value || 100;
+                    const width = document.getElementById('cropWSlider')?.value || 200;
+                    const height = document.getElementById('cropHSlider')?.value || 200;
+                    formData.append('x', x);
+                    formData.append('y', y);
+                    formData.append('width', width);
+                    formData.append('height', height);
+                    break;
+                case 'arithmetic':
+                    const arithOp = document.getElementById('arithmeticOp')?.value || 'add';
+                    const arithValue = document.getElementById('arithmeticSlider')?.value || 50;
+                    formData.append('operation', arithOp);
+                    formData.append('value', arithValue);
+                    break;
+                case 'bitwise':
+                    const bitwiseOp = document.getElementById('bitwiseOp')?.value || 'and';
+                    const maskType = document.getElementById('maskType')?.value || 'circular';
+                    formData.append('operation', bitwiseOp);
+                    formData.append('mask_type', maskType);
+                    break;
+                case 'dilation':
+                case 'erosion':
+                case 'opening':
+                case 'closing':
+                    const morphKernel = document.getElementById('morphKernelSlider')?.value || 5;
+                    const morphIter = document.getElementById('morphIterSlider')?.value || 1;
+                    formData.append('kernel_size', morphKernel);
+                    formData.append('iterations', morphIter);
+                    break;
+                case 'translate':
+                    formData.append('tx', 50);
+                    formData.append('ty', 50);
+                    break;
+                case 'flip':
+                    formData.append('flip_code', 1);
+                    break;
+            }
+        }
+
+        function displayMultipleImages(result) {
+            // For operations that return multiple images (like RGB channels)
+            const container = document.getElementById('processedImage');
+            container.innerHTML = `
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; width: 100%; height: 100%;">
+                    <img src="data:image/png;base64,${result.red_channel}" alt="Red Channel" style="width: 100%; height: 100%; object-fit: contain;">
+                    <img src="data:image/png;base64,${result.green_channel}" alt="Green Channel" style="width: 100%; height: 100%; object-fit: contain;">
+                    <img src="data:image/png;base64,${result.blue_channel}" alt="Blue Channel" style="width: 100%; height: 100%; object-fit: contain;">
+                    <div style="display: flex; align-items: center; justify-content: center; background: #f0f0f0; font-size: 12px; color: #666;">RGB Channels</div>
+                </div>
+            `;
+        }
+
+        function updateProcessedInfo(operation, result = {}) {
+            const info = document.getElementById('processedInfo');
+            let infoHTML = `<strong>Operation:</strong> ${operation.replace(/-/g, ' ')}<br>`;
+            
+            if (result) {
+                infoHTML += `<strong>Status:</strong> Complete<br>`;
+                infoHTML += `<strong>Backend:</strong> FastAPI + OpenCV<br>`;
+                
+                if (result.operation) infoHTML += `<strong>Type:</strong> ${result.operation}<br>`;
+            }
+            
+            info.innerHTML = infoHTML;
+        }
+
+        // Control update functions
+        function updateRotation(value) {
+            if (value) document.getElementById('rotateValue').textContent = value;
+            const scaleValue = document.getElementById('scaleSlider')?.value;
+            if (scaleValue) document.getElementById('scaleValue').textContent = scaleValue;
+            if (currentOperation === 'rotate') {
+                processImage('rotate');
+            }
+        }
+
+        function updateBlur() {
+            const value = document.getElementById('blurSlider').value;
+            document.getElementById('blurValue').textContent = value;
+            if (currentOperation === 'blur') {
+                processImage('blur');
+            }
+        }
+
+        function updateThreshold(value) {
+            if (value) document.getElementById('threshValue').textContent = value;
+            if (currentOperation === 'threshold') {
+                processImage('threshold');
+            }
+        }
+
+        function updateResize(value) {
+            if (value) document.getElementById('scaleResizeValue').textContent = value;
+            if (currentOperation === 'resize') {
+                processImage('resize');
+            }
+        }
+
+        function updateEdgeDetection() {
+            const lowValue = document.getElementById('edgeLowSlider').value;
+            const highValue = document.getElementById('edgeHighSlider').value;
+            document.getElementById('edgeLowValue').textContent = lowValue;
+            document.getElementById('edgeHighValue').textContent = highValue;
+            if (currentOperation === 'edge-detection') {
+                processImage('edge-detection');
+            }
+        }
+
+        function updateColorManipulation() {
+            const hueValue = document.getElementById('hueSlider').value;
+            const satValue = document.getElementById('satSlider').value;
+            const valValue = document.getElementById('valSlider').value;
+            document.getElementById('hueValue').textContent = hueValue;
+            document.getElementById('satValue').textContent = satValue;
+            document.getElementById('valValue').textContent = valValue;
+            if (currentOperation === 'color-manipulation') {
+                processImage('color-manipulation');
+            }
+        }
+
+        function updateCrop() {
+            const x = document.getElementById('cropXSlider').value;
+            const y = document.getElementById('cropYSlider').value;
+            const w = document.getElementById('cropWSlider').value;
+            const h = document.getElementById('cropHSlider').value;
+            document.getElementById('cropXValue').textContent = x;
+            document.getElementById('cropYValue').textContent = y;
+            document.getElementById('cropWValue').textContent = w;
+            document.getElementById('cropHValue').textContent = h;
+            if (currentOperation === 'crop') {
+                processImage('crop');
+            }
+        }
+
+        function updateArithmetic() {
+            const value = document.getElementById('arithmeticSlider').value;
+            document.getElementById('arithmeticValue').textContent = value;
+            if (currentOperation === 'arithmetic') {
+                processImage('arithmetic');
+            }
+        }
+
+        function updateBitwise() {
+            if (currentOperation === 'bitwise') {
+                processImage('bitwise');
+            }
+        }
+
+        function updateMorphology() {
+            const kernelValue = document.getElementById('morphKernelSlider').value;
+            const iterValue = document.getElementById('morphIterSlider').value;
+            document.getElementById('morphKernelValue').textContent = kernelValue;
+            document.getElementById('morphIterValue').textContent = iterValue;
+            if (['dilation', 'erosion', 'opening', 'closing'].includes(currentOperation)) {
+                processImage(currentOperation);
+            }
+        }
+
+        // Batch processing functions
+        function setupBatchModal() {
+            const dropZone = document.getElementById('dropZone');
+            const batchInput = document.getElementById('batchInput');
+
+            dropZone.addEventListener('click', () => batchInput.click());
+            batchInput.addEventListener('change', handleBatchFiles);
+
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.style.background = 'rgba(52, 152, 219, 0.1)';
+            });
+
+            dropZone.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                dropZone.style.background = '';
+            });
+
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.style.background = '';
+                const files = Array.from(e.dataTransfer.files).filter(file => 
+                    file.type.startsWith('image/')
+                );
+                handleBatchFiles({ target: { files } });
+            });
+        }
+
+        function handleBatchFiles(event) {
+            const files = Array.from(event.target.files);
+            batchFiles = [...batchFiles, ...files];
+            updateBatchFileList();
+        }
+
+        function updateBatchFileList() {
+            const fileList = document.getElementById('batchFileList');
+            fileList.innerHTML = '';
+            
+            batchFiles.forEach((file, index) => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+                fileItem.innerHTML = `
+                    <span>${file.name} (${(file.size / 1024).toFixed(1)} KB)</span>
+                    <button onclick="removeBatchFile(${index})" style="background: #e74c3c; color: white; border: none; border-radius: 3px; padding: 2px 6px; cursor: pointer;">Remove</button>
+                `;
+                fileList.appendChild(fileItem);
+            });
+        }
+
+        function removeBatchFile(index) {
+            batchFiles.splice(index, 1);
+            updateBatchFileList();
+        }
+
+        function openBatchModal() {
+            document.getElementById('batchModal').classList.add('active');
+        }
+
+        function closeBatchModal() {
+            document.getElementById('batchModal').classList.remove('active');
+        }
+
+        async function startBatchProcessing() {
+            if (batchFiles.length === 0) {
+                showMessage('Please select images to process', 'error');
+                return;
+            }
+
+            if (!currentOperation) {
+                showMessage('Please select an operation first', 'error');
+                return;
+            }
+
+            closeBatchModal();
+            await processBatch();
+        }
+
+        async function processBatch() {
+            updateStatus(`Batch processing ${batchFiles.length} images...`);
+            let processed = 0;
+
+            try {
+                const formData = new FormData();
+                
+                batchFiles.forEach(file => {
+                    formData.append('files', file);
+                });
+                
+                formData.append('operation', currentOperation);
+                const parameters = getOperationParameters();
+                formData.append('parameters', JSON.stringify(parameters));
+
+                const response = await fetch(`${BACKEND_URL}/api/batch-process`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                
+                showProgress(100);
+                updateStatus(`Batch processing complete! Processed ${result.total_processed} images`);
+                showMessage(`Successfully processed ${result.total_processed} images!`, 'success');
+                
+                setTimeout(() => {
+                    showProgress(0);
+                    updateStatus('Ready');
+                }, 2000);
+
+            } catch (error) {
+                console.error('Batch processing error:', error);
+                showMessage(`Batch processing failed: ${error.message}`, 'error');
+                showProgress(0);
+                updateStatus('Ready');
+            }
+        }
+
+        function getOperationParameters() {
+            const params = {};
+            
+            switch(currentOperation) {
+                case 'blur':
+                    params.kernel_size = parseInt(document.getElementById('blurSlider')?.value || 15);
+                    params.blur_type = document.getElementById('blurType')?.value || 'gaussian';
+                    break;
+                case 'threshold':
+                    params.threshold_value = parseInt(document.getElementById('threshSlider')?.value || 127);
+                    params.threshold_type = document.getElementById('threshType')?.value || 'binary';
+                    break;
+                case 'edge-detection':
+                    params.low = parseInt(document.getElementById('edgeLowSlider')?.value || 50);
+                    params.high = parseInt(document.getElementById('edgeHighSlider')?.value || 150);
+                    break;
+            }
+            
+            return params;
+        }
+
+        function exportResults() {
+            if (!processedImage && !currentImage) {
+                showMessage('No images to export', 'error');
+                return;
+            }
+
+            const link = document.createElement('a');
+            
+            if (processedImage) {
+                link.href = processedImage;
+                link.download = `processed_${currentOperation}_${Date.now()}.png`;
+            } else {
+                link.href = currentImage;
+                link.download = `image_${Date.now()}.png`;
+            }
+            
+            link.click();
+            showMessage('Image exported successfully', 'success');
+        }
+
+        // Utility functions
+        function updateStatus(message) {
+            document.getElementById('statusText').textContent = message;
+        }
+
+        function showProgress(percentage) {
+            document.getElementById('progressFill').style.width = percentage + '%';
+        }
+
+        function updateImageCount(count) {
+            document.getElementById('imageCount').textContent = 
+                count === 1 ? '1 image loaded' : `${count} images loaded`;
+        }
+
+        function showMessage(message, type) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = type === 'error' ? 'error-message' : 'success-message';
+            messageDiv.textContent = message;
+            
+            document.body.appendChild(messageDiv);
+            
+            setTimeout(() => {
+                if (document.body.contains(messageDiv)) {
+                    document.body.removeChild(messageDiv);
+                }
+            }, 3000);
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key) {
+                    case 'o':
+                        e.preventDefault();
+                        document.getElementById('imageInput').click();
+                        break;
+                    case 's':
+                        e.preventDefault();
+                        exportResults();
+                        break;
+                    case 'b':
+                        e.preventDefault();
+                        openBatchModal();
+                        break;
+                }
+            }
+        });
+    </script>
+</body>
+</html>
