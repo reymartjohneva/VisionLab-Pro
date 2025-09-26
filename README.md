@@ -1,4 +1,4 @@
-OpenCV Image Processing Studio
+VisionLab Pro
 Overview
 
 Welcome to the OpenCV Image Processing Studio! This is a comprehensive desktop application designed to cover all 10 OpenCV laboratory topics. It provides a powerful platform for performing image processing operations with an intuitive, modern UI, built using Electron.js for the frontend and FastAPI with OpenCV for the backend.
