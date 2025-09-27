@@ -142,23 +142,35 @@ async def convert_grayscale(image_data: str = Form(...)):
 async def compare_dimensions(image_data: str = Form(...)):
     """Compare color and grayscale image dimensions"""
     try:
+        # Decode image
         image = decode_base64_image(image_data)
+        
+        # Convert to grayscale
         gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        
+        # Calculate memory sizes
+        color_size = image.size * image.itemsize  # Total bytes for color image
+        gray_size = gray_image.size * gray_image.itemsize  # Total bytes for grayscale
+        
+        # Calculate size reduction percentage
+        reduction = ((color_size - gray_size) / color_size) * 100
         
         return {
             "color_dimensions": {
-                "height": image.shape[0],
-                "width": image.shape[1],
-                "channels": image.shape[2],
-                "total_size": image.size
+                "height": int(image.shape[0]),
+                "width": int(image.shape[1]),
+                "channels": int(image.shape[2]),
+                "memory_size": int(color_size),
+                "bits_per_pixel": int(image.itemsize * 8 * image.shape[2])
             },
             "grayscale_dimensions": {
-                "height": gray_image.shape[0],
-                "width": gray_image.shape[1],
+                "height": int(gray_image.shape[0]),
+                "width": int(gray_image.shape[1]),
                 "channels": 1,
-                "total_size": gray_image.size
+                "memory_size": int(gray_size),
+                "bits_per_pixel": int(gray_image.itemsize * 8)
             },
-            "size_reduction": f"{((image.size - gray_image.size) / image.size * 100):.1f}%"
+            "size_reduction_percent": float(f"{reduction:.1f}")
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -171,20 +183,33 @@ async def compare_dimensions(image_data: str = Form(...)):
 async def extract_rgb_channels(image_data: str = Form(...)):
     """Extract individual RGB channels"""
     try:
+        # Decode image
         image = decode_base64_image(image_data)
         
         # Split into BGR channels (OpenCV uses BGR)
         b, g, r = cv2.split(image)
         
-        # Create single-channel visualizations
-        b_3channel = cv2.merge([b, np.zeros_like(b), np.zeros_like(b)])
-        g_3channel = cv2.merge([np.zeros_like(g), g, np.zeros_like(g)])
-        r_3channel = cv2.merge([np.zeros_like(r), np.zeros_like(r), r])
+        # Create visualizations for each channel
+        # Zero arrays for merging
+        zeros = np.zeros(b.shape, dtype=np.uint8)
         
+        # Create BGR images for each channel
+        blue_channel = cv2.merge([b, zeros, zeros])  # Blue channel in BGR
+        green_channel = cv2.merge([zeros, g, zeros])  # Green channel in BGR
+        red_channel = cv2.merge([zeros, zeros, r])    # Red channel in BGR
+        
+        # Convert to base64
         return {
-            "red_channel": encode_image_to_base64(r_3channel),
-            "green_channel": encode_image_to_base64(g_3channel),
-            "blue_channel": encode_image_to_base64(b_3channel),
+            "channels": {
+                "red": encode_image_to_base64(red_channel),
+                "green": encode_image_to_base64(green_channel),
+                "blue": encode_image_to_base64(blue_channel)
+            },
+            "channel_intensities": {
+                "red_mean": float(f"{np.mean(r):.2f}"),
+                "green_mean": float(f"{np.mean(g):.2f}"),
+                "blue_mean": float(f"{np.mean(b):.2f}")
+            },
             "operation": "rgb_channel_extraction"
         }
     except Exception as e:

@@ -264,21 +264,8 @@ function updateGridView() {
 function updateComparisonView() {
     const gallery = document.getElementById('imageGallery');
     
-    // If no images are selected but we have loaded images, show first two images by default
-    let imagesToCompare = [];
-    if (selectedImageIndices.length === 0 && loadedImages.length > 0) {
-        // Auto-select first 2 images for comparison
-        imagesToCompare = loadedImages.slice(0, Math.min(2, loadedImages.length));
-        selectedImageIndices = imagesToCompare.map((_, index) => index);
-        // Update selection state
-        loadedImages.forEach((img, index) => {
-            img.selected = selectedImageIndices.includes(index);
-        });
-    } else if (selectedImageIndices.length > 0) {
-        imagesToCompare = selectedImageIndices.map(index => loadedImages[index]);
-    }
-    
-    if (imagesToCompare.length === 0) {
+    // If no images are loaded, show placeholder
+    if (loadedImages.length === 0) {
         gallery.innerHTML = `
             <div class="comparison-placeholder-main">
                 <h3>No images to compare</h3>
@@ -289,12 +276,20 @@ function updateComparisonView() {
         return;
     }
     
+    // Get images to compare (either selected or first two)
+    let imagesToCompare = [];
+    if (selectedImageIndices.length === 0) {
+        imagesToCompare = loadedImages.slice(0, Math.min(2, loadedImages.length));
+    } else {
+        imagesToCompare = selectedImageIndices.map(index => loadedImages[index]);
+    }
+    
     const comparisonHtml = imagesToCompare.map((image, index) => `
         <div class="comparison-item">
             <div class="comparison-header">
                 <h4>${image.name}</h4>
                 <div class="comparison-controls">
-                    <button class="btn btn-sm" onclick="processSelectedImages([${selectedImageIndices[index]}])">
+                    <button class="btn btn-sm btn-primary" onclick="processSelectedImages([${index}])">
                         Process This Image
                     </button>
                 </div>
@@ -302,23 +297,43 @@ function updateComparisonView() {
             <div class="comparison-content">
                 <div class="comparison-side">
                     <div class="side-label">Original</div>
-                    <img src="${image.src}" alt="${image.name}">
-                    <div class="side-info">${image.metadata.width} × ${image.metadata.height}</div>
+                    <img src="${image.src}" alt="${image.name}" class="comparison-image">
+                    <div class="side-info">
+                        ${image.metadata.width} × ${image.metadata.height}
+                    </div>
                 </div>
+                
                 <div class="comparison-divider"></div>
+                
                 <div class="comparison-side">
                     <div class="side-label">Processed</div>
                     ${image.processedSrc ? 
-                        `<img src="${image.processedSrc}" alt="Processed ${image.name}">` :
-                        `<div class="comparison-placeholder">Select an operation to process</div>`
+                        `<img src="${image.processedSrc}" alt="Processed ${image.name}" class="comparison-image">` :
+                        `<div class="comparison-placeholder">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+                            </svg>
+                            <span>Select operation to process</span>
+                        </div>`
                     }
-                    <div class="side-info">${image.metadata.lastOperation || 'No processing'}</div>
+                    <div class="side-info">
+                        ${image.metadata.lastOperation || 'No processing applied'}
+                    </div>
                 </div>
             </div>
+            ${image.processing ? 
+                `<div class="processing-overlay">
+                    <div class="spinner"></div>
+                </div>` : ''
+            }
         </div>
     `).join('');
     
-    gallery.innerHTML = `<div class="comparison-container">${comparisonHtml}</div>`;
+    gallery.innerHTML = `
+        <div class="comparison-container">
+            ${comparisonHtml}
+        </div>
+    `;
 }
 
 function toggleImageSelection(index) {
@@ -600,13 +615,11 @@ async function processSingleImage(image, operation) {
     try {
         // Check if backend is available
         if (document.getElementById('backendStatus').textContent === 'Disconnected') {
-            // Use mock processing for demo
             return await mockProcessImage(image, operation);
         }
 
-        const base64Data = image.src.split(',')[1];
         const formData = new FormData();
-        formData.append('image_data', base64Data);
+        formData.append('image_data', image.src.split(',')[1]);
         
         addOperationParameters(formData, operation);
         
@@ -621,13 +634,65 @@ async function processSingleImage(image, operation) {
 
         const result = await response.json();
         
+        // Handle RGB channels operation specifically
+        if (operation === 'rgb-channels') {
+            // For RGB channels, we create a combined image showing all channels
+            const channels = result.channels;
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Create new images for each channel
+            const redImg = new Image();
+            const greenImg = new Image();
+            const blueImg = new Image();
+            
+            // Load red channel
+            await new Promise((resolve) => {
+                redImg.onload = resolve;
+                redImg.src = `data:image/png;base64,${channels.red}`;
+            });
+            
+            // Set canvas size based on first channel
+            canvas.width = redImg.width;
+            canvas.height = redImg.height * 3; // Stack channels vertically
+            
+            // Draw red channel
+            ctx.drawImage(redImg, 0, 0);
+            
+            // Load and draw green channel
+            await new Promise((resolve) => {
+                greenImg.onload = resolve;
+                greenImg.src = `data:image/png;base64,${channels.green}`;
+            });
+            ctx.drawImage(greenImg, 0, redImg.height);
+            
+            // Load and draw blue channel
+            await new Promise((resolve) => {
+                blueImg.onload = resolve;
+                blueImg.src = `data:image/png;base64,${channels.blue}`;
+            });
+            ctx.drawImage(blueImg, 0, redImg.height * 2);
+            
+            // Return the combined image
+            return {
+                success: true,
+                processedImage: canvas.toDataURL('image/png'),
+                metadata: {
+                    operation: 'rgb_channels',
+                    channelIntensities: result.channel_intensities
+                }
+            };
+        }
+        
+        // For other operations
         return {
             success: true,
-            processedImage: `data:image/png;base64,${result.processed_image}`,
+            processedImage: `data:image/png;base64,${result.processed_image || result.processedImage}`,
             metadata: result
         };
 
     } catch (error) {
+        console.error('Processing error:', error);
         return {
             success: false,
             error: error.message
