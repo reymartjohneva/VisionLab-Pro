@@ -140,37 +140,26 @@ async def convert_grayscale(image_data: str = Form(...)):
 
 @app.post("/api/compare-dimensions")
 async def compare_dimensions(image_data: str = Form(...)):
-    """Compare color and grayscale image dimensions"""
     try:
         # Decode image
         image = decode_base64_image(image_data)
         
-        # Convert to grayscale
+        # Get grayscale version
         gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         
-        # Calculate memory sizes
-        color_size = image.size * image.itemsize  # Total bytes for color image
-        gray_size = gray_image.size * gray_image.itemsize  # Total bytes for grayscale
-        
-        # Calculate size reduction percentage
-        reduction = ((color_size - gray_size) / color_size) * 100
+        # Get a subset of pixel values for display (15x20 grid)
+        height, width = gray_image.shape
+        h_step = max(1, height // 15)
+        w_step = max(1, width // 20)
+        pixel_values = gray_image[::h_step, ::w_step][:15, :20].tolist()
         
         return {
-            "color_dimensions": {
-                "height": int(image.shape[0]),
-                "width": int(image.shape[1]),
-                "channels": int(image.shape[2]),
-                "memory_size": int(color_size),
-                "bits_per_pixel": int(image.itemsize * 8 * image.shape[2])
-            },
-            "grayscale_dimensions": {
-                "height": int(gray_image.shape[0]),
-                "width": int(gray_image.shape[1]),
-                "channels": 1,
-                "memory_size": int(gray_size),
-                "bits_per_pixel": int(gray_image.itemsize * 8)
-            },
-            "size_reduction_percent": float(f"{reduction:.1f}")
+            "pixel_values": pixel_values,
+            "dimensions": {
+                "height": height,
+                "width": width,
+                "channels": 1
+            }
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

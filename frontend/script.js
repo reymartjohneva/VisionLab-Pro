@@ -306,26 +306,23 @@ function updateComparisonView() {
                 <div class="comparison-divider"></div>
                 
                 <div class="comparison-side">
-                    <div class="side-label">Processed</div>
+                    <div class="side-label">Dimension Analysis</div>
                     ${image.processedSrc ? 
-                        `<img src="${image.processedSrc}" alt="Processed ${image.name}" class="comparison-image">` :
+                        `<img src="${image.processedSrc}" alt="Dimension analysis for ${image.name}" class="comparison-image">` :
                         `<div class="comparison-placeholder">
                             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                                 <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
                             </svg>
-                            <span>Select operation to process</span>
+                            <span>Click Process to analyze dimensions</span>
                         </div>`
                     }
-                    <div class="side-info">
-                        ${image.metadata.lastOperation || 'No processing applied'}
-                    </div>
+                    ${image.metadata.details ? 
+                        `<div class="side-info">
+                            Memory Reduction: ${image.metadata.details.size_reduction_percent.toFixed(1)}%
+                        </div>` : ''
+                    }
                 </div>
             </div>
-            ${image.processing ? 
-                `<div class="processing-overlay">
-                    <div class="spinner"></div>
-                </div>` : ''
-            }
         </div>
     `).join('');
     
@@ -613,16 +610,14 @@ async function processSelectedImages(imageIndices = null) {
 
 async function processSingleImage(image, operation) {
     try {
-        // Check if backend is available
-        if (document.getElementById('backendStatus').textContent === 'Disconnected') {
-            return await mockProcessImage(image, operation);
-        }
-
         const formData = new FormData();
         formData.append('image_data', image.src.split(',')[1]);
-        
-        addOperationParameters(formData, operation);
-        
+
+        // For compare-dimensions, check if grayscale version exists
+        if (operation === 'compare-dimensions' && !image.grayscaleData) {
+            throw new Error('Please convert to grayscale first before comparing dimensions');
+        }
+
         const response = await fetch(`${BACKEND_URL}/api/${operation}`, {
             method: 'POST',
             body: formData
@@ -633,57 +628,66 @@ async function processSingleImage(image, operation) {
         }
 
         const result = await response.json();
-        
-        // Handle RGB channels operation specifically
-        if (operation === 'rgb-channels') {
-            // For RGB channels, we create a combined image showing all channels
-            const channels = result.channels;
+
+        if (operation === 'grayscale') {
+            // Store grayscale data for later comparison
+            image.grayscaleData = result.processed_image;
+            return {
+                success: true,
+                processedImage: `data:image/png;base64,${result.processed_image}`,
+                metadata: {
+                    operation: 'grayscale'
+                }
+            };
+        }
+
+        if (operation === 'compare-dimensions') {
+            // Create visualization of pixel values
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
             
-            // Create new images for each channel
-            const redImg = new Image();
-            const greenImg = new Image();
-            const blueImg = new Image();
+            canvas.width = 800;
+            canvas.height = 400;
             
-            // Load red channel
-            await new Promise((resolve) => {
-                redImg.onload = resolve;
-                redImg.src = `data:image/png;base64,${channels.red}`;
-            });
+            // Set background
+            ctx.fillStyle = '#1a1a2e';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
             
-            // Set canvas size based on first channel
-            canvas.width = redImg.width;
-            canvas.height = redImg.height * 3; // Stack channels vertically
+            // Add title
+            ctx.fillStyle = '#00ffff';
+            ctx.font = '16px "JetBrains Mono"';
+            ctx.fillText('Grayscale Image Dimensions', 20, 30);
+            ctx.fillText('Remember RGB color images have 3 dimensions, one for each primary color.', 20, 60);
+            ctx.fillText('Grayscale just has 1, which is the intensity of gray.', 20, 90);
+
+            // Display pixel matrix
+            const pixelData = result.pixel_values;
+            const cellSize = 30;
+            const startX = 20;
+            const startY = 120;
+
+            ctx.font = '12px "JetBrains Mono"';
             
-            // Draw red channel
-            ctx.drawImage(redImg, 0, 0);
-            
-            // Load and draw green channel
-            await new Promise((resolve) => {
-                greenImg.onload = resolve;
-                greenImg.src = `data:image/png;base64,${channels.green}`;
-            });
-            ctx.drawImage(greenImg, 0, redImg.height);
-            
-            // Load and draw blue channel
-            await new Promise((resolve) => {
-                blueImg.onload = resolve;
-                blueImg.src = `data:image/png;base64,${channels.blue}`;
-            });
-            ctx.drawImage(blueImg, 0, redImg.height * 2);
-            
-            // Return the combined image
+            for (let i = 0; i < Math.min(pixelData.length, 15); i++) {
+                for (let j = 0; j < Math.min(pixelData[i].length, 20); j++) {
+                    const value = pixelData[i][j];
+                    ctx.fillStyle = `rgb(${value},${value},${value})`;
+                    ctx.fillRect(startX + j * cellSize, startY + i * cellSize, cellSize - 1, cellSize - 1);
+                    
+                    ctx.fillStyle = '#00ffff';
+                    ctx.fillText(value.toString(), startX + j * cellSize + 5, startY + i * cellSize + 20);
+                }
+            }
+
             return {
                 success: true,
                 processedImage: canvas.toDataURL('image/png'),
                 metadata: {
-                    operation: 'rgb_channels',
-                    channelIntensities: result.channel_intensities
+                    operation: 'dimension_comparison'
                 }
             };
         }
-        
+
         // For other operations
         return {
             success: true,

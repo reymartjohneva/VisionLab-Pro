@@ -1832,3 +1832,38 @@ button:focus,
         border: 1px solid #000;
     }
 }
+
+.dimension-analysis {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 1rem;
+    border: 1px solid var(--primary-dark);
+    box-shadow: var(--shadow-md);
+}
+
+.analysis-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+.analysis-value {
+    color: var(--primary);
+    font-weight: 500;
+}
+
+.pixel-matrix {
+    font-family: 'JetBrains Mono', monospace;
+    border-collapse: collapse;
+    background: var(--surface);
+}
+
+.pixel-cell {
+    width: 30px;
+    height: 30px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--primary);
+    border: 1px solid var(--surface-light);
+}
