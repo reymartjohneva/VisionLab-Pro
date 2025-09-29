@@ -462,6 +462,18 @@ function showControls(operation) {
                 </div>
             `;
             break;
+        case 'rgb-channels':
+            controlsHTML += `
+                <p>This operation will extract individual Red, Green, and Blue channels from the image.</p>
+                <p>Each channel will be displayed separately to show the color distribution.</p>
+            `;
+            break;
+        case 'hsv-convert':
+            controlsHTML += `
+                <p>Convert the image to HSV (Hue, Saturation, Value) color space.</p>
+                <p>This will show the hue, saturation, and value channels separately.</p>
+            `;
+            break;
         case 'color-manipulation':
             controlsHTML += `
                 <div class="control-group">
@@ -616,6 +628,9 @@ async function processSingleImage(image, operation) {
         const formData = new FormData();
         formData.append('image_data', image.src.split(',')[1]);
 
+        // Add operation-specific parameters
+        addOperationParameters(formData, operation);
+
         // For compare-dimensions, check if grayscale version exists
         if (operation === 'compare-dimensions' && !image.grayscaleData) {
             throw new Error('Please convert to grayscale first before comparing dimensions');
@@ -687,6 +702,118 @@ async function processSingleImage(image, operation) {
                 processedImage: canvas.toDataURL('image/png'),
                 metadata: {
                     operation: 'dimension_comparison'
+                }
+            };
+        }
+
+        if (operation === 'rgb-channels') {
+            // Create a composite image showing all RGB channels
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = 1200;
+            canvas.height = 400;
+            
+            // Set background
+            ctx.fillStyle = '#1a1a2e';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Add title
+            ctx.fillStyle = '#00ffff';
+            ctx.font = '20px "JetBrains Mono"';
+            ctx.fillText('RGB Channel Extraction', 20, 30);
+            
+            // Display channel information
+            ctx.font = '14px "JetBrains Mono"';
+            ctx.fillStyle = '#ff4444';
+            ctx.fillText(`Red Channel (Mean: ${result.channel_intensities.red_mean})`, 20, 80);
+            
+            ctx.fillStyle = '#44ff44';
+            ctx.fillText(`Green Channel (Mean: ${result.channel_intensities.green_mean})`, 420, 80);
+            
+            ctx.fillStyle = '#4444ff';
+            ctx.fillText(`Blue Channel (Mean: ${result.channel_intensities.blue_mean})`, 820, 80);
+            
+            // Load and display the three channel images side by side
+            const promises = [];
+            const channels = ['red', 'green', 'blue'];
+            const positions = [20, 420, 820];
+            
+            channels.forEach((channel, index) => {
+                const img = new Image();
+                const promise = new Promise((resolve) => {
+                    img.onload = () => {
+                        ctx.drawImage(img, positions[index], 100, 350, 250);
+                        resolve();
+                    };
+                    img.src = `data:image/png;base64,${result.channels[channel]}`;
+                });
+                promises.push(promise);
+            });
+            
+            await Promise.all(promises);
+            
+            return {
+                success: true,
+                processedImage: canvas.toDataURL('image/png'),
+                metadata: {
+                    operation: 'rgb_channel_extraction',
+                    channel_intensities: result.channel_intensities
+                }
+            };
+        }
+
+        if (operation === 'hsv-convert') {
+            // Create a composite image showing HSV conversion
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = 1600;
+            canvas.height = 400;
+            
+            // Set background
+            ctx.fillStyle = '#1a1a2e';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Add title
+            ctx.fillStyle = '#00ffff';
+            ctx.font = '20px "JetBrains Mono"';
+            ctx.fillText('HSV Color Space Conversion', 20, 30);
+            
+            // Channel labels
+            ctx.font = '14px "JetBrains Mono"';
+            ctx.fillStyle = '#ffff00';
+            ctx.fillText('HSV Image', 20, 80);
+            ctx.fillText('Hue Channel', 320, 80);
+            ctx.fillText('Saturation Channel', 620, 80);
+            ctx.fillText('Value Channel', 920, 80);
+            
+            // Load and display the images
+            const images = [
+                { src: result.hsv_image, x: 20 },
+                { src: result.hue_channel, x: 320 },
+                { src: result.saturation_channel, x: 620 },
+                { src: result.value_channel, x: 920 }
+            ];
+            
+            const promises = images.map(imgData => {
+                const img = new Image();
+                return new Promise((resolve) => {
+                    img.onload = () => {
+                        ctx.drawImage(img, imgData.x, 100, 280, 250);
+                        resolve();
+                    };
+                    img.src = `data:image/png;base64,${imgData.src}`;
+                });
+            });
+            
+            await Promise.all(promises);
+            
+            return {
+                success: true,
+                processedImage: canvas.toDataURL('image/png'),
+                metadata: {
+                    operation: 'hsv_conversion'
                 }
             };
         }
@@ -773,6 +900,12 @@ function addOperationParameters(formData, operation) {
             formData.append('height', height);
             break;
         // Add more cases for other operations
+        case 'rgb-channels':
+            // No additional parameters needed
+            break;
+        case 'hsv-convert':
+            // No additional parameters needed
+            break;
         case 'translate':
             formData.append('tx', 50);
             formData.append('ty', 50);
