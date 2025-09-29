@@ -259,6 +259,9 @@ function updateGridView() {
     `).join('');
     
     gallery.innerHTML = `<div class="image-grid">${gridHtml}</div>`;
+    
+    // Check if gallery is scrollable and update visual indicator
+    setTimeout(() => checkGalleryScrollable(), 100);
 }
 
 function updateComparisonView() {
@@ -1065,18 +1068,26 @@ function generateMultiImagePDFReport() {
             
             // Add images side by side
             try {
-                if (includeOriginal) {
-                    await addImageToPDF(doc, image.src, 'Original', 20, yPosition, 80, 60);
-                }
-                
-                if (includeProcessed && image.processedSrc) {
-                    await addImageToPDF(doc, image.processedSrc, 'Processed', 110, yPosition, 80, 60);
+                // If only one type of image is included, center it and make it larger
+                if (includeOriginal && !includeProcessed) {
+                    await addImageToPDF(doc, image.src, 'Original', 80, yPosition, 150, 120);
+                } else if (!includeOriginal && includeProcessed && image.processedSrc) {
+                    await addImageToPDF(doc, image.processedSrc, 'Processed', 80, yPosition, 150, 120);
+                } else {
+                    // Both images side by side
+                    if (includeOriginal) {
+                        await addImageToPDF(doc, image.src, 'Original', 15, yPosition, 120, 90);
+                    }
+                    
+                    if (includeProcessed && image.processedSrc) {
+                        await addImageToPDF(doc, image.processedSrc, 'Processed', 145, yPosition, 120, 90);
+                    }
                 }
             } catch (error) {
                 console.error('Error adding image to PDF:', error);
             }
             
-            yPosition += 70;
+            yPosition += 100;
             imagesOnCurrentPage++;
         }
         
@@ -1165,7 +1176,7 @@ function addImageToPDF(doc, imageSrc, title, x, y, maxWidth, maxHeight) {
             }
             
             // Add image to PDF
-            doc.addImage(img, 'JPEG', x, y, width * 0.3, height * 0.3);
+            doc.addImage(img, 'JPEG', x, y, width * 0.75, height * 0.75);
             
             // Add title
             doc.setFontSize(8);
@@ -1489,3 +1500,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Export performance data
 window.getPerformanceStats = trackPerformance;
+
+// Function to check if the gallery is scrollable and update visual indicator
+function checkGalleryScrollable() {
+    const gallery = document.getElementById('imageGallery');
+    if (!gallery) return;
+    
+    // Check if content height exceeds container height
+    const isScrollable = gallery.scrollHeight > gallery.clientHeight;
+    
+    if (isScrollable) {
+        gallery.classList.add('has-scroll');
+    } else {
+        gallery.classList.remove('has-scroll');
+    }
+}
