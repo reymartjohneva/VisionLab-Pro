@@ -148,7 +148,7 @@ function loadSingleImage(file, index) {
 function updateImageGallery() {
     const gallery = document.getElementById('imageGallery');
     
-    console.log(`Updating gallery with ${loadedImages.length} images, current view: ${currentView}`);
+    console.log(`Updating gallery with ${loadedImages.length} images`);
     
     if (loadedImages.length === 0) {
         gallery.innerHTML = `
@@ -172,11 +172,11 @@ function updateImageGallery() {
         return;
     }
 
-    // Create gallery based on current view
-    if (currentView === 'grid') {
-        updateGridView();
+    // Automatically choose view based on number of images
+    if (loadedImages.length === 1) {
+        updateSingleView();
     } else {
-        updateComparisonView();
+        updateGridView();
     }
 }
 
@@ -259,6 +259,96 @@ function updateGridView() {
     `).join('');
     
     gallery.innerHTML = `<div class="image-grid">${gridHtml}</div>`;
+    
+    // Check if gallery is scrollable and update visual indicator
+    setTimeout(() => checkGalleryScrollable(), 100);
+}
+
+function updateSingleView() {
+    const gallery = document.getElementById('imageGallery');
+    const image = loadedImages[0]; // Get the single image
+    
+    const singleViewHtml = `
+        <div class="single-image-container">
+            <div class="single-image-card ${image.selected ? 'selected' : ''} ${image.processing ? 'processing' : ''}" 
+                 data-index="0" onclick="toggleImageSelection(0)">
+                <div class="single-image-header">
+                    <div class="single-image-title">
+                        <div class="selection-checkbox ${image.selected ? 'checked' : ''}">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20,6 9,17 4,12"/>
+                            </svg>
+                        </div>
+                        <h2 class="image-name">${image.name}</h2>
+                    </div>
+                    <div class="single-image-actions">
+                        <button class="btn btn-outline btn-sm" onclick="event.stopPropagation(); downloadSingle(0)" title="Download">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                <polyline points="7,10 12,15 17,10"/>
+                                <line x1="12" y1="15" x2="12" y2="3"/>
+                            </svg>
+                            Download
+                        </button>
+                        <button class="btn btn-outline btn-sm" onclick="event.stopPropagation(); removeSingle(0)" title="Remove">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="18" y1="6" x2="6" y2="18"/>
+                                <line x1="6" y1="6" x2="18" y2="18"/>
+                            </svg>
+                            Remove
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="single-image-comparison">
+                    <div class="single-image-side original">
+                        <div class="single-image-label">Original</div>
+                        <div class="single-image-display">
+                            <img src="${image.src}" alt="${image.name}">
+                            ${image.processing ? '<div class="processing-overlay"><div class="spinner"></div></div>' : ''}
+                        </div>
+                        <div class="single-image-info">
+                            <span class="info-item">📐 ${image.metadata.width} × ${image.metadata.height}</span>
+                            <span class="info-item">💾 ${formatFileSize(image.size)}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="single-image-side processed">
+                        <div class="single-image-label">Processed</div>
+                        <div class="single-image-display">
+                            ${image.processedSrc ? 
+                                `<img src="${image.processedSrc}" alt="Processed ${image.name}">` :
+                                `<div class="placeholder-processed">
+                                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                        <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+                                    </svg>
+                                    <span>Select operation to process</span>
+                                </div>`
+                            }
+                            ${image.processing ? '<div class="processing-overlay"><div class="spinner"></div></div>' : ''}
+                        </div>
+                        <div class="single-image-info">
+                            <span class="info-item">🔧 ${image.metadata.lastOperation || 'No operation'}</span>
+                            ${image.metadata.processingTime > 0 ? 
+                                `<span class="info-item">⏱️ ${image.metadata.processingTime}ms</span>` : ''
+                            }
+                        </div>
+                    </div>
+                </div>
+                
+                ${image.processed && image.metadata.lastOperation ? 
+                    `<div class="processing-status success">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20,6 9,17 4,12"/>
+                        </svg>
+                        <span>Successfully processed with ${image.metadata.lastOperation}</span>
+                    </div>` : ''
+                }
+            </div>
+        </div>
+    `;
+    
+    gallery.innerHTML = singleViewHtml;
     
     // Check if gallery is scrollable and update visual indicator
     setTimeout(() => checkGalleryScrollable(), 100);

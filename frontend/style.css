@@ -764,6 +764,215 @@ body::before {
     gap: 24px;
 }
 
+/* Single Image View */
+.single-image-container {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 20px;
+    min-height: 100%;
+}
+
+.single-image-card {
+    background: linear-gradient(135deg, var(--surface), var(--surface-light));
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-xl);
+    border: 1px solid rgba(0, 255, 255, 0.2);
+    overflow: hidden;
+    transition: var(--transition);
+    cursor: pointer;
+    position: relative;
+    max-width: 1200px;
+    width: 100%;
+}
+
+.single-image-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent));
+    opacity: 0;
+    transition: var(--transition);
+}
+
+.single-image-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-2xl), var(--glow-cyan);
+}
+
+.single-image-card:hover::before {
+    opacity: 1;
+}
+
+.single-image-card.selected {
+    border-color: var(--primary);
+    box-shadow: var(--shadow-xl), var(--glow-cyan);
+}
+
+.single-image-card.selected::before {
+    opacity: 1;
+}
+
+.single-image-card.processing {
+    opacity: 0.8;
+    pointer-events: none;
+}
+
+.single-image-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px 32px;
+    background: rgba(22, 33, 62, 0.5);
+    border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+}
+
+.single-image-title {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.single-image-title .selection-checkbox {
+    width: 24px;
+    height: 24px;
+    border: 2px solid var(--primary);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+    background: transparent;
+    cursor: pointer;
+}
+
+.single-image-title .selection-checkbox.checked {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: var(--bg-primary);
+    box-shadow: var(--glow-cyan);
+}
+
+.single-image-title .selection-checkbox svg {
+    width: 16px;
+    height: 16px;
+    opacity: 0;
+    transition: var(--transition);
+}
+
+.single-image-title .selection-checkbox.checked svg {
+    opacity: 1;
+}
+
+.single-image-title .image-name {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text-primary);
+    font-family: 'JetBrains Mono', monospace;
+    margin: 0;
+}
+
+.single-image-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.single-image-comparison {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px;
+    background: rgba(0, 255, 255, 0.2);
+}
+
+.single-image-side {
+    background: var(--surface);
+    display: flex;
+    flex-direction: column;
+}
+
+.single-image-label {
+    padding: 16px 24px;
+    background: rgba(22, 33, 62, 0.8);
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-align: center;
+    border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+    font-family: 'JetBrains Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.single-image-display {
+    position: relative;
+    height: 400px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-primary);
+    overflow: hidden;
+}
+
+.single-image-display img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: 4px;
+    box-shadow: var(--shadow-lg);
+}
+
+.single-image-info {
+    padding: 16px 24px;
+    background: rgba(22, 33, 62, 0.5);
+    border-top: 1px solid rgba(0, 255, 255, 0.2);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.single-image-info .info-item {
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+/* Responsive adjustments for single image view */
+@media (max-width: 768px) {
+    .single-image-container {
+        padding: 16px;
+    }
+    
+    .single-image-header {
+        padding: 16px 20px;
+        flex-direction: column;
+        gap: 16px;
+        align-items: flex-start;
+    }
+    
+    .single-image-comparison {
+        grid-template-columns: 1fr;
+    }
+    
+    .single-image-display {
+        height: 300px;
+    }
+    
+    .single-image-title .image-name {
+        font-size: 16px;
+    }
+    
+    .single-image-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+}
+
 .image-card {
     background: linear-gradient(135deg, var(--surface), var(--surface-light));
     border-radius: var(--radius-xl);
