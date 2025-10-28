@@ -303,6 +303,8 @@ async def draw_shapes(image_data: str = Form(...)):
 async def add_text(
     image_data: str = Form(...),
     text: str = Form("OpenCV Text"),
+    x: int = Form(50),
+    y: int = Form(50),
     font_scale: float = Form(1.0),
     color_r: int = Form(255),
     color_g: int = Form(255),
@@ -315,7 +317,7 @@ async def add_text(
         
         # Add text
         font = cv2.FONT_HERSHEY_SIMPLEX
-        position = (50, 50)
+        position = (x, y)
         color = (color_b, color_g, color_r)  # BGR format
         thickness = 2
         
@@ -324,6 +326,9 @@ async def add_text(
         return {
             "processed_image": encode_image_to_base64(result_image),
             "text": text,
+            "position": {"x": x, "y": y},
+            "font_scale": font_scale,
+            "color": {"r": color_r, "g": color_g, "b": color_b},
             "operation": "add_text"
         }
     except Exception as e:

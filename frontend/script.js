@@ -696,6 +696,46 @@ function showControls(operation) {
                 </div>
             `;
             break;
+        case 'add-text':
+            controlsHTML += `
+                <div class="control-group">
+                    <label>Text Content</label>
+                    <input type="text" id="textContent" value="OpenCV Text" 
+                           placeholder="Enter text to add"
+                           oninput="updateTextPreview()">
+                </div>
+                <div class="control-group">
+                    <label>X Position: <span id="textXValue">50</span></label>
+                    <input type="range" id="textXSlider" min="0" max="800" value="50"
+                           oninput="updateTextPosition()">
+                </div>
+                <div class="control-group">
+                    <label>Y Position: <span id="textYValue">50</span></label>
+                    <input type="range" id="textYSlider" min="0" max="800" value="50"
+                           oninput="updateTextPosition()">
+                </div>
+                <div class="control-group">
+                    <label>Font Scale: <span id="fontScaleValue">1.0</span></label>
+                    <input type="range" id="fontScaleSlider" min="0.5" max="5.0" value="1.0" step="0.1"
+                           oninput="updateTextFont()">
+                </div>
+                <div class="control-group">
+                    <label>Text Color</label>
+                    <select id="textColorSelect" onchange="updateTextColor()">
+                        <option value="#FFFFFF">White</option>
+                        <option value="#000000">Black</option>
+                        <option value="#FF0000">Red</option>
+                        <option value="#00FF00">Green</option>
+                        <option value="#0000FF">Blue</option>
+                        <option value="#FFFF00">Yellow</option>
+                        <option value="#FF00FF">Magenta</option>
+                        <option value="#00FFFF" selected>Cyan</option>
+                        <option value="#FFA500">Orange</option>
+                        <option value="#800080">Purple</option>
+                    </select>
+                </div>
+            `;
+            break;
         default:
             controlsHTML += '<p>No additional controls needed for this operation.</p>';
     }
@@ -1243,6 +1283,26 @@ function addOperationParameters(formData, operation) {
             formData.append('width', width);
             formData.append('height', height);
             break;
+        case 'add-text':
+            const text = document.getElementById('textContent')?.value || 'OpenCV Text';
+            const textX = document.getElementById('textXSlider')?.value || 50;
+            const textY = document.getElementById('textYSlider')?.value || 50;
+            const fontScale = document.getElementById('fontScaleSlider')?.value || 1.0;
+            const textColor = document.getElementById('textColorSelect')?.value || '#00FFFF';
+            
+            // Convert hex color to RGB
+            const r = parseInt(textColor.slice(1, 3), 16);
+            const g = parseInt(textColor.slice(3, 5), 16);
+            const b = parseInt(textColor.slice(5, 7), 16);
+            
+            formData.append('text', text);
+            formData.append('x', textX);
+            formData.append('y', textY);
+            formData.append('font_scale', fontScale);
+            formData.append('color_r', r);
+            formData.append('color_g', g);
+            formData.append('color_b', b);
+            break;
         // Add more cases for other operations
         case 'dimensions':
             // No additional parameters needed
@@ -1308,6 +1368,26 @@ function updateCrop() {
     document.getElementById('cropYValue').textContent = y;
     document.getElementById('cropWValue').textContent = w;
     document.getElementById('cropHValue').textContent = h;
+}
+
+function updateTextPreview() {
+    // Just update the preview, actual text is read when processing
+}
+
+function updateTextPosition() {
+    const x = document.getElementById('textXSlider').value;
+    const y = document.getElementById('textYSlider').value;
+    document.getElementById('textXValue').textContent = x;
+    document.getElementById('textYValue').textContent = y;
+}
+
+function updateTextFont() {
+    const scale = document.getElementById('fontScaleSlider').value;
+    document.getElementById('fontScaleValue').textContent = scale;
+}
+
+function updateTextColor() {
+    // Color is now selected from dropdown, no additional display needed
 }
 
 // View toggle functions

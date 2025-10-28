@@ -1437,6 +1437,51 @@ body::before {
     margin-right: 8px;
 }
 
+.control-group input[type="text"] {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid rgba(0, 255, 255, 0.2);
+    border-radius: var(--radius);
+    font-size: 14px;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    transition: var(--transition);
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.control-group input[type="text"]:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: var(--glow-cyan);
+}
+
+.color-picker-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.control-group input[type="color"] {
+    width: 60px;
+    height: 40px;
+    border: 1px solid rgba(0, 255, 255, 0.3);
+    border-radius: var(--radius);
+    background: var(--bg-secondary);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.control-group input[type="color"]:hover {
+    border-color: var(--primary);
+    box-shadow: var(--glow-cyan);
+}
+
+#textColorValue {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
 .control-actions {
     margin-top: 24px;
     padding-top: 20px;
