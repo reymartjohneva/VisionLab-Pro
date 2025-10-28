@@ -7,12 +7,15 @@ let selectedImageIndices = [];
 let BACKEND_URL = 'http://localhost:8000';
 let processingQueue = [];
 let isProcessing = false;
+let operationQueue = []; // Queue for multiple sequential operations
+let excludedFromQueue = ['dimensions', 'compare-dimensions', 'rgb-channels', 'hsv-convert']; // Operations that can't be queued
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
     setupEventListeners();
     checkBackendConnection();
     updateStatus('Multi-image processing ready');
+    markExcludedOperations();
 });
 
 function setupEventListeners() {
@@ -29,6 +32,17 @@ function setupEventListeners() {
 
     // Keyboard shortcuts
     document.addEventListener('keydown', handleKeyboardShortcuts);
+}
+
+function markExcludedOperations() {
+    // Add visual indicator to operations that can't be queued
+    document.querySelectorAll('.operation-btn').forEach(btn => {
+        const operation = btn.dataset.operation;
+        if (excludedFromQueue.includes(operation)) {
+            btn.style.opacity = '0.7';
+            btn.title = `${btn.textContent.trim()} (Single operation only - cannot be combined)`;
+        }
+    });
 }
 
 async function checkBackendConnection() {
@@ -452,13 +466,81 @@ function selectOperation(operation, buttonElement) {
         return;
     }
 
-    // Update active button
-    document.querySelectorAll('.operation-btn').forEach(btn => btn.classList.remove('active'));
-    buttonElement.classList.add('active');
+    // Check if operation is excluded from queue
+    if (excludedFromQueue.includes(operation)) {
+        // These operations run alone and clear the queue
+        operationQueue = [];
+        currentOperation = operation;
+        document.querySelectorAll('.operation-btn').forEach(btn => btn.classList.remove('active'));
+        buttonElement.classList.add('active');
+        showControls(operation);
+        updateSelectedCount();
+        showMessage(`${operation.replace(/-/g, ' ')} selected (single operation only)`, 'info');
+        return;
+    }
 
-    currentOperation = operation;
-    showControls(operation);
+    // For normal operations, add to queue
+    if (operationQueue.includes(operation)) {
+        // Remove from queue if already exists
+        operationQueue = operationQueue.filter(op => op !== operation);
+        buttonElement.classList.remove('active');
+        showMessage(`Removed ${operation.replace(/-/g, ' ')} from operation queue`, 'info');
+    } else {
+        // Add to queue
+        operationQueue.push(operation);
+        buttonElement.classList.add('active');
+        showMessage(`Added ${operation.replace(/-/g, ' ')} to operation queue (${operationQueue.length} operations)`, 'success');
+    }
+
+    // Set current operation to the last one in queue
+    currentOperation = operationQueue.length > 0 ? operationQueue[operationQueue.length - 1] : null;
+    
+    if (operationQueue.length > 0) {
+        showControls(operationQueue[operationQueue.length - 1]);
+        updateOperationQueueDisplay();
+    }
+    
     updateSelectedCount();
+}
+
+function updateOperationQueueDisplay() {
+    // Re-render controls to update queue display
+    if (operationQueue.length > 0) {
+        showControls(operationQueue[operationQueue.length - 1]);
+    }
+}
+
+function removeFromQueue(operation) {
+    operationQueue = operationQueue.filter(op => op !== operation);
+    
+    // Update button state
+    const buttons = document.querySelectorAll('.operation-btn');
+    buttons.forEach(btn => {
+        if (btn.dataset.operation === operation) {
+            btn.classList.remove('active');
+        }
+    });
+    
+    if (operationQueue.length === 0) {
+        currentOperation = null;
+        closeControls();
+        showMessage('Operation queue cleared', 'info');
+    } else {
+        currentOperation = operationQueue[operationQueue.length - 1];
+        updateOperationQueueDisplay();
+        showMessage(`Removed ${operation.replace(/-/g, ' ')} from queue (${operationQueue.length} remaining)`, 'info');
+    }
+}
+
+function clearOperationQueue() {
+    operationQueue = [];
+    currentOperation = null;
+    
+    // Remove all active states
+    document.querySelectorAll('.operation-btn').forEach(btn => btn.classList.remove('active'));
+    
+    closeControls();
+    showMessage('All operations cleared from queue', 'info');
 }
 
 function showControls(operation) {
@@ -552,6 +634,13 @@ function showControls(operation) {
                 </div>
             `;
             break;
+        case 'dimensions':
+            controlsHTML += `
+                <p>Display comprehensive information about the image dimensions and properties.</p>
+                <p>This will show width, height, channels, total pixels, data type, aspect ratio, and estimated memory size.</p>
+                <p class="info-note">📊 No parameters needed - click Process to view dimensions.</p>
+            `;
+            break;
         case 'rgb-channels':
             controlsHTML += `
                 <p>This operation will extract individual Red, Green, and Blue channels from the image.</p>
@@ -611,16 +700,36 @@ function showControls(operation) {
             controlsHTML += '<p>No additional controls needed for this operation.</p>';
     }
 
+    // Add operation queue display if there are multiple operations
+    if (operationQueue.length > 1) {
+        controlsHTML += `
+            <div class="operation-queue" style="margin-top: 20px; padding: 15px; background: rgba(0, 255, 255, 0.1); border-radius: 8px; border: 1px solid rgba(0, 255, 255, 0.3);">
+                <h4 style="color: #00ffff; margin-bottom: 10px; font-size: 14px;">Operation Queue (${operationQueue.length} operations):</h4>
+                <div class="queue-items" style="display: flex; flex-wrap: wrap; gap: 8px;">
+                    ${operationQueue.map((op, index) => `
+                        <div class="queue-item" style="background: rgba(0, 255, 255, 0.2); padding: 6px 12px; border-radius: 4px; font-size: 12px; color: #fff; display: flex; align-items: center; gap: 6px;">
+                            <span>${index + 1}. ${op.replace(/-/g, ' ')}</span>
+                            <button onclick="removeFromQueue('${op}')" style="background: none; border: none; color: #ff4444; cursor: pointer; font-size: 16px; padding: 0; line-height: 1;">×</button>
+                        </div>
+                    `).join('')}
+                </div>
+                <button class="btn btn-outline" onclick="clearOperationQueue()" style="margin-top: 10px; font-size: 12px; padding: 6px 12px;">
+                    Clear Queue
+                </button>
+            </div>
+        `;
+    }
+
     // Add processing buttons
     controlsHTML += `
         <div class="control-actions">
             <button class="btn btn-primary" onclick="processSelectedImages()">
                 <span class="btn-icon">⚡</span>
-                Process Selected Images
+                ${operationQueue.length > 1 ? `Process with ${operationQueue.length} Operations` : 'Process Selected Images'}
             </button>
             <button class="btn btn-secondary" onclick="processAllImages()">
                 <span class="btn-icon">🔄</span>
-                Process All Images
+                ${operationQueue.length > 1 ? `Process All with ${operationQueue.length} Operations` : 'Process All Images'}
             </button>
         </div>
     `;
@@ -645,7 +754,7 @@ async function processAllImages() {
 }
 
 async function processSelectedImages(imageIndices = null) {
-    if (!currentOperation) {
+    if (!currentOperation && operationQueue.length === 0) {
         showMessage('Please select an operation first!', 'error');
         return;
     }
@@ -658,7 +767,10 @@ async function processSelectedImages(imageIndices = null) {
     }
 
     isProcessing = true;
-    updateStatus(`Processing ${indices.length} images with ${currentOperation}...`);
+    const operationText = operationQueue.length > 1 
+        ? `${operationQueue.length} operations (${operationQueue.join(' → ')})` 
+        : currentOperation;
+    updateStatus(`Processing ${indices.length} images with ${operationText}...`);
 
     try {
         let processed = 0;
@@ -672,15 +784,46 @@ async function processSelectedImages(imageIndices = null) {
             const startTime = Date.now();
             
             try {
-                const result = await processSingleImage(image, currentOperation);
-                
-                if (result.success) {
-                    image.processedSrc = result.processedImage;
+                // Process with operation queue if multiple operations
+                if (operationQueue.length > 1) {
+                    let currentSrc = image.processedSrc || image.src;
+                    const operationsApplied = [];
+                    
+                    for (const operation of operationQueue) {
+                        // Create temporary image object for processing
+                        const tempImage = {
+                            src: currentSrc,
+                            name: image.name
+                        };
+                        
+                        const result = await processSingleImage(tempImage, operation);
+                        
+                        if (result.success) {
+                            currentSrc = result.processedImage;
+                            operationsApplied.push(operation);
+                        } else {
+                            throw new Error(`Failed at operation: ${operation}`);
+                        }
+                    }
+                    
+                    // Update image with final result
+                    image.processedSrc = currentSrc;
                     image.processed = true;
-                    image.metadata.lastOperation = currentOperation;
+                    image.metadata.lastOperation = operationsApplied.join(' → ');
                     image.metadata.processingTime = Date.now() - startTime;
+                    image.metadata.operationChain = operationsApplied;
                 } else {
-                    throw new Error(result.error || 'Processing failed');
+                    // Single operation processing
+                    const result = await processSingleImage(image, currentOperation);
+                    
+                    if (result.success) {
+                        image.processedSrc = result.processedImage;
+                        image.processed = true;
+                        image.metadata.lastOperation = currentOperation;
+                        image.metadata.processingTime = Date.now() - startTime;
+                    } else {
+                        throw new Error(result.error || 'Processing failed');
+                    }
                 }
             } catch (error) {
                 console.error(`Error processing ${image.name}:`, error);
@@ -736,6 +879,117 @@ async function processSingleImage(image, operation) {
         }
 
         const result = await response.json();
+
+        if (operation === 'dimensions') {
+            // Create visualization of image dimensions and properties
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = 800;
+            canvas.height = 500;
+            
+            // Set background
+            ctx.fillStyle = '#1a1a2e';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Add title
+            ctx.fillStyle = '#00ffff';
+            ctx.font = 'bold 24px "JetBrains Mono"';
+            ctx.fillText('Image Dimensions & Properties', 40, 50);
+            
+            // Create a nice bordered box
+            ctx.strokeStyle = '#00ffff';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(40, 80, 720, 380);
+            
+            // Display dimension information
+            ctx.font = '18px "JetBrains Mono"';
+            let yPos = 130;
+            const lineHeight = 45;
+            
+            // Width
+            ctx.fillStyle = '#ffffff';
+            ctx.fillText('Width:', 80, yPos);
+            ctx.fillStyle = '#ffcc00';
+            ctx.font = 'bold 18px "JetBrains Mono"';
+            ctx.fillText(`${result.width} pixels`, 300, yPos);
+            
+            // Height
+            yPos += lineHeight;
+            ctx.font = '18px "JetBrains Mono"';
+            ctx.fillStyle = '#ffffff';
+            ctx.fillText('Height:', 80, yPos);
+            ctx.fillStyle = '#ffcc00';
+            ctx.font = 'bold 18px "JetBrains Mono"';
+            ctx.fillText(`${result.height} pixels`, 300, yPos);
+            
+            // Channels
+            yPos += lineHeight;
+            ctx.font = '18px "JetBrains Mono"';
+            ctx.fillStyle = '#ffffff';
+            ctx.fillText('Channels:', 80, yPos);
+            ctx.fillStyle = '#ffcc00';
+            ctx.font = 'bold 18px "JetBrains Mono"';
+            const channelText = result.channels === 3 ? '3 (RGB)' : result.channels === 1 ? '1 (Grayscale)' : result.channels;
+            ctx.fillText(channelText, 300, yPos);
+            
+            // Total Pixels
+            yPos += lineHeight;
+            ctx.font = '18px "JetBrains Mono"';
+            ctx.fillStyle = '#ffffff';
+            ctx.fillText('Total Pixels:', 80, yPos);
+            ctx.fillStyle = '#ffcc00';
+            ctx.font = 'bold 18px "JetBrains Mono"';
+            ctx.fillText(result.total_pixels.toLocaleString(), 300, yPos);
+            
+            // Data Type
+            yPos += lineHeight;
+            ctx.font = '18px "JetBrains Mono"';
+            ctx.fillStyle = '#ffffff';
+            ctx.fillText('Data Type:', 80, yPos);
+            ctx.fillStyle = '#ffcc00';
+            ctx.font = 'bold 18px "JetBrains Mono"';
+            ctx.fillText(result.data_type, 300, yPos);
+            
+            // Aspect Ratio
+            yPos += lineHeight;
+            ctx.font = '18px "JetBrains Mono"';
+            ctx.fillStyle = '#ffffff';
+            ctx.fillText('Aspect Ratio:', 80, yPos);
+            ctx.fillStyle = '#ffcc00';
+            ctx.font = 'bold 18px "JetBrains Mono"';
+            const aspectRatio = (result.width / result.height).toFixed(2);
+            ctx.fillText(`${aspectRatio}:1`, 300, yPos);
+            
+            // Memory Size (approximate)
+            yPos += lineHeight;
+            ctx.font = '18px "JetBrains Mono"';
+            ctx.fillStyle = '#ffffff';
+            ctx.fillText('Memory Size:', 80, yPos);
+            ctx.fillStyle = '#ffcc00';
+            ctx.font = 'bold 18px "JetBrains Mono"';
+            const memoryBytes = result.total_pixels * result.channels;
+            const memorySizeMB = (memoryBytes / (1024 * 1024)).toFixed(2);
+            ctx.fillText(`~${memorySizeMB} MB`, 300, yPos);
+            
+            // Add a decorative line at the bottom
+            yPos += 50;
+            ctx.strokeStyle = '#00ffff';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(80, yPos);
+            ctx.lineTo(720, yPos);
+            ctx.stroke();
+            
+            return {
+                success: true,
+                processedImage: canvas.toDataURL('image/png'),
+                metadata: {
+                    operation: 'dimensions',
+                    dimensions: result
+                }
+            };
+        }
 
         if (operation === 'grayscale') {
             // Store grayscale data for later comparison
@@ -990,6 +1244,9 @@ function addOperationParameters(formData, operation) {
             formData.append('height', height);
             break;
         // Add more cases for other operations
+        case 'dimensions':
+            // No additional parameters needed
+            break;
         case 'rgb-channels':
             // No additional parameters needed
             break;
@@ -1075,6 +1332,7 @@ function clearAllImages() {
     processedImages = [];
     selectedImageIndices = [];
     currentOperation = null;
+    operationQueue = []; // Clear operation queue
     
     updateImageGallery();
     updateImageCount(0);
@@ -1146,6 +1404,23 @@ function closeControls() {
     document.getElementById('controlsPanel').classList.remove('active');
     document.querySelectorAll('.operation-btn').forEach(btn => btn.classList.remove('active'));
     currentOperation = null;
+}
+
+function toggleControlsPanel() {
+    const controlsPanel = document.getElementById('controlsPanel');
+    const minimizeBtn = document.getElementById('minimizeControlsBtn');
+    const chevronIcon = minimizeBtn.querySelector('svg polyline');
+    
+    controlsPanel.classList.toggle('minimized');
+    
+    // Rotate chevron icon and update label
+    if (controlsPanel.classList.contains('minimized')) {
+        chevronIcon.setAttribute('points', '6 9 12 15 18 9'); // Chevron down
+        minimizeBtn.setAttribute('aria-label', 'Expand controls panel');
+    } else {
+        chevronIcon.setAttribute('points', '18 15 12 9 6 15'); // Chevron up
+        minimizeBtn.setAttribute('aria-label', 'Minimize controls panel');
+    }
 }
 
 // Export functions

@@ -1291,6 +1291,24 @@ body::before {
     display: block;
 }
 
+/* Minimized controls panel */
+.controls-panel.minimized .controls-content {
+    display: none;
+}
+
+.controls-panel.minimized {
+    margin-bottom: 12px;
+}
+
+.controls-panel.minimized .controls-header {
+    border-bottom: none;
+    cursor: pointer;
+}
+
+.controls-panel.minimized .controls-header:hover {
+    background: rgba(22, 33, 62, 0.5);
+}
+
 @keyframes slideUp {
     from {
         opacity: 0;
@@ -1367,12 +1385,14 @@ body::before {
     background: var(--bg-secondary);
     outline: none;
     -webkit-appearance: none;
+    appearance: none;
     cursor: pointer;
     border: 1px solid rgba(0, 255, 255, 0.2);
 }
 
 .control-group input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;
+    appearance: none;
     width: 18px;
     height: 18px;
     border-radius: 50%;

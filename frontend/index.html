@@ -9,7 +9,7 @@
 <body>
     <div class="app-container">
         <!-- Sidebar -->
-        <div class="sidebar">
+        <div class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <div class="logo">
                     <div class="logo-icon">
@@ -400,6 +400,14 @@
                         <h4>Processing Controls</h4>
                         <div class="controls-actions">
                             <span class="selected-count" id="selectedCount">0 images selected</span>
+                            <button class="icon-btn" 
+                                    onclick="toggleControlsPanel()"
+                                    aria-label="Minimize controls panel"
+                                    id="minimizeControlsBtn">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="18 15 12 9 6 15"></polyline>
+                                </svg>
+                            </button>
                             <button class="icon-btn" 
                                     onclick="closeControls()"
                                     aria-label="Close controls panel">
