@@ -1289,28 +1289,45 @@ function generateMultiImagePDFReport() {
             
             yPosition += 5;
             
-            // Add images side by side
+            // Add images vertically (processed below original)
             try {
+                let imageHeight = 0;
+                
                 // If only one type of image is included, center it and make it larger
                 if (includeOriginal && !includeProcessed) {
-                    await addImageToPDF(doc, image.src, 'Original', 80, yPosition, 150, 120);
+                    await addImageToPDF(doc, image.src, 'Original', 30, yPosition, 150, 100);
+                    imageHeight = 105;
                 } else if (!includeOriginal && includeProcessed && image.processedSrc) {
-                    await addImageToPDF(doc, image.processedSrc, 'Processed', 80, yPosition, 150, 120);
+                    await addImageToPDF(doc, image.processedSrc, 'Processed', 30, yPosition, 150, 100);
+                    imageHeight = 105;
                 } else {
-                    // Both images side by side
+                    // Both images vertically stacked
                     if (includeOriginal) {
-                        await addImageToPDF(doc, image.src, 'Original', 15, yPosition, 120, 90);
+                        await addImageToPDF(doc, image.src, 'Original', 30, yPosition, 150, 80);
+                        yPosition += 85; // Move down for next image
                     }
                     
                     if (includeProcessed && image.processedSrc) {
-                        await addImageToPDF(doc, image.processedSrc, 'Processed', 145, yPosition, 120, 90);
+                        await addImageToPDF(doc, image.processedSrc, 'Processed', 30, yPosition, 150, 80);
+                        imageHeight = includeOriginal ? 170 : 85; // Total height based on what's included
+                    } else {
+                        imageHeight = 85; // Only original was added
                     }
+                }
+                
+                // Check if we need a new page for the next image
+                if (yPosition + imageHeight > 250) {
+                    doc.addPage();
+                    currentPage++;
+                    yPosition = 20;
+                    imagesOnCurrentPage = 0;
+                } else {
+                    yPosition += imageHeight + 15; // Add spacing between image sets
                 }
             } catch (error) {
                 console.error('Error adding image to PDF:', error);
             }
             
-            yPosition += 100;
             imagesOnCurrentPage++;
         }
         
