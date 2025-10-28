@@ -2076,3 +2076,24 @@ button:focus,
     color: var(--primary);
     border: 1px solid var(--surface-light);
 }
+
+function showControls(operation) {
+    // ...existing control generation code...
+
+    // Replace the control actions section with this simplified version
+    controlsHTML += `
+        <div class="control-actions">
+            <button class="btn btn-primary" onclick="processSelectedImages()">
+                <span class="btn-icon">⚡</span>
+                Process Selected Images
+            </button>
+            <button class="btn btn-secondary" onclick="processAllImages()">
+                <span class="btn-icon">🔄</span>
+                Process All Images
+            </button>
+        </div>
+    `;
+
+    controlsContent.innerHTML = controlsHTML;
+    controlsPanel.classList.add('active');
+}
