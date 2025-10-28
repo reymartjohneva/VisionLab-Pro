@@ -736,6 +736,43 @@ function showControls(operation) {
                 </div>
             `;
             break;
+        case 'translate':
+            controlsHTML += `
+                <div class="control-group">
+                    <label>Horizontal Translation (X): <span id="translateXValue">50</span>px</label>
+                    <input type="range" id="translateXSlider" min="-500" max="500" value="50"
+                           oninput="updateTranslate()">
+                </div>
+                <div class="control-group">
+                    <label>Vertical Translation (Y): <span id="translateYValue">50</span>px</label>
+                    <input type="range" id="translateYSlider" min="-500" max="500" value="50"
+                           oninput="updateTranslate()">
+                </div>
+                <div class="info-note" style="margin-top: 10px; padding: 10px; background: rgba(0, 255, 255, 0.1); border-radius: 4px; font-size: 12px;">
+                    <strong>ℹ️ Translation Info:</strong><br>
+                    • Positive X: Move right | Negative X: Move left<br>
+                    • Positive Y: Move down | Negative Y: Move up
+                </div>
+            `;
+            break;
+        case 'flip':
+            controlsHTML += `
+                <div class="control-group">
+                    <label>Flip Direction</label>
+                    <select id="flipDirection" onchange="updateFlip()">
+                        <option value="1">Horizontal (Left ↔ Right)</option>
+                        <option value="0">Vertical (Up ↔ Down)</option>
+                        <option value="-1">Both (Horizontal + Vertical)</option>
+                    </select>
+                </div>
+                <div class="info-note" style="margin-top: 10px; padding: 10px; background: rgba(0, 255, 255, 0.1); border-radius: 4px; font-size: 12px;">
+                    <strong>ℹ️ Flip Options:</strong><br>
+                    • <strong>Horizontal:</strong> Mirror image left to right<br>
+                    • <strong>Vertical:</strong> Mirror image top to bottom<br>
+                    • <strong>Both:</strong> Rotate image 180°
+                </div>
+            `;
+            break;
         default:
             controlsHTML += '<p>No additional controls needed for this operation.</p>';
     }
@@ -1314,11 +1351,14 @@ function addOperationParameters(formData, operation) {
             // No additional parameters needed
             break;
         case 'translate':
-            formData.append('tx', 50);
-            formData.append('ty', 50);
+            const translateX = document.getElementById('translateXSlider')?.value || 50;
+            const translateY = document.getElementById('translateYSlider')?.value || 50;
+            formData.append('tx', parseInt(translateX));
+            formData.append('ty', parseInt(translateY));
             break;
         case 'flip':
-            formData.append('flip_code', 1);
+            const flipCode = document.getElementById('flipDirection')?.value || 1;
+            formData.append('flip_code', parseInt(flipCode));
             break;
     }
 }
@@ -1388,6 +1428,17 @@ function updateTextFont() {
 
 function updateTextColor() {
     // Color is now selected from dropdown, no additional display needed
+}
+
+function updateTranslate() {
+    const x = document.getElementById('translateXSlider').value;
+    const y = document.getElementById('translateYSlider').value;
+    document.getElementById('translateXValue').textContent = x;
+    document.getElementById('translateYValue').textContent = y;
+}
+
+function updateFlip() {
+    // Flip direction is selected from dropdown, no additional display needed
 }
 
 // View toggle functions
