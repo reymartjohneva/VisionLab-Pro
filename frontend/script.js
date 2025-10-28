@@ -644,7 +644,6 @@ async function processAllImages() {
     await processSelectedImages(imagesToProcess);
 }
 
-// Replace the processSelectedImages function with this simplified version
 async function processSelectedImages(imageIndices = null) {
     if (!currentOperation) {
         showMessage('Please select an operation first!', 'error');
@@ -659,56 +658,284 @@ async function processSelectedImages(imageIndices = null) {
     }
 
     isProcessing = true;
-    updateStatus(`Processing ${indices.length} images...`);
+    updateStatus(`Processing ${indices.length} images with ${currentOperation}...`);
 
     try {
+        let processed = 0;
+        const total = indices.length;
+
         for (const index of indices) {
             const image = loadedImages[index];
             image.processing = true;
             updateImageGallery();
 
             const startTime = Date.now();
-
+            
             try {
-                const formData = new FormData();
-                formData.append('image_data', image.processedSrc?.split(',')[1] || image.src.split(',')[1]);
-                addOperationParameters(formData, currentOperation);
-
-                const response = await fetch(`${BACKEND_URL}/api/${currentOperation}`, {
-                    method: 'POST',
-                    body: formData
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-                const result = await response.json();
+                const result = await processSingleImage(image, currentOperation);
                 
-                image.processedSrc = `data:image/png;base64,${result.processed_image}`;
-                image.metadata.lastOperation = currentOperation;
-                image.metadata.processingTime = Date.now() - startTime;
-                image.processed = true;
-
+                if (result.success) {
+                    image.processedSrc = result.processedImage;
+                    image.processed = true;
+                    image.metadata.lastOperation = currentOperation;
+                    image.metadata.processingTime = Date.now() - startTime;
+                } else {
+                    throw new Error(result.error || 'Processing failed');
+                }
             } catch (error) {
                 console.error(`Error processing ${image.name}:`, error);
                 showMessage(`Error processing ${image.name}: ${error.message}`, 'error');
             }
 
             image.processing = false;
+            processed++;
+            
+            const progress = Math.round((processed / total) * 100);
+            showProgress(progress);
             updateImageGallery();
         }
 
-        updateStatus('Processing complete');
-        showMessage('Operation completed successfully!', 'success');
+        updateStatus(`Successfully processed ${processed}/${total} images`);
+        showMessage(`Processing complete! ${processed}/${total} images processed successfully.`, 'success');
+        
+        setTimeout(() => {
+            showProgress(0);
+            updateStatus('Ready for multi-image processing');
+        }, 2000);
 
     } catch (error) {
-        console.error('Processing error:', error);
-        showMessage(`Processing failed: ${error.message}`, 'error');
+        console.error('Batch processing error:', error);
+        showMessage(`Batch processing failed: ${error.message}`, 'error');
+        updateStatus('Processing failed');
     } finally {
         isProcessing = false;
         showProgress(0);
     }
+}
+
+async function processSingleImage(image, operation) {
+    try {
+        const formData = new FormData();
+        formData.append('image_data', image.src.split(',')[1]);
+
+        // Add operation-specific parameters
+        addOperationParameters(formData, operation);
+
+        // For compare-dimensions, check if grayscale version exists
+        if (operation === 'compare-dimensions' && !image.grayscaleData) {
+            throw new Error('Please convert to grayscale first before comparing dimensions');
+        }
+
+        const response = await fetch(`${BACKEND_URL}/api/${operation}`, {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        if (operation === 'grayscale') {
+            // Store grayscale data for later comparison
+            image.grayscaleData = result.processed_image;
+            return {
+                success: true,
+                processedImage: `data:image/png;base64,${result.processed_image}`,
+                metadata: {
+                    operation: 'grayscale'
+                }
+            };
+        }
+
+        if (operation === 'compare-dimensions') {
+            // Create visualization of pixel values
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = 800;
+            canvas.height = 400;
+            
+            // Set background
+            ctx.fillStyle = '#1a1a2e';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Add title
+            ctx.fillStyle = '#00ffff';
+            ctx.font = '16px "JetBrains Mono"';
+            ctx.fillText('Grayscale Image Dimensions', 20, 30);
+            ctx.fillText('Remember RGB color images have 3 dimensions, one for each primary color.', 20, 60);
+            ctx.fillText('Grayscale just has 1, which is the intensity of gray.', 20, 90);
+
+            // Display pixel matrix
+            const pixelData = result.pixel_values;
+            const cellSize = 30;
+            const startX = 20;
+            const startY = 120;
+
+            ctx.font = '12px "JetBrains Mono"';
+            
+            for (let i = 0; i < Math.min(pixelData.length, 15); i++) {
+                for (let j = 0; j < Math.min(pixelData[i].length, 20); j++) {
+                    const value = pixelData[i][j];
+                    ctx.fillStyle = `rgb(${value},${value},${value})`;
+                    ctx.fillRect(startX + j * cellSize, startY + i * cellSize, cellSize - 1, cellSize - 1);
+                    
+                    ctx.fillStyle = '#00ffff';
+                    ctx.fillText(value.toString(), startX + j * cellSize + 5, startY + i * cellSize + 20);
+                }
+            }
+
+            return {
+                success: true,
+                processedImage: canvas.toDataURL('image/png'),
+                metadata: {
+                    operation: 'dimension_comparison'
+                }
+            };
+        }
+
+        if (operation === 'rgb-channels') {
+            // Create a composite image showing all RGB channels
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = 1200;
+            canvas.height = 400;
+            
+            // Set background
+            ctx.fillStyle = '#1a1a2e';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Add title
+            ctx.fillStyle = '#00ffff';
+            ctx.font = '20px "JetBrains Mono"';
+            ctx.fillText('RGB Channel Extraction', 20, 30);
+            
+            // Display channel information
+            ctx.font = '14px "JetBrains Mono"';
+            ctx.fillStyle = '#ff4444';
+            ctx.fillText(`Red Channel (Mean: ${result.channel_intensities.red_mean})`, 20, 80);
+            
+            ctx.fillStyle = '#44ff44';
+            ctx.fillText(`Green Channel (Mean: ${result.channel_intensities.green_mean})`, 420, 80);
+            
+            ctx.fillStyle = '#4444ff';
+            ctx.fillText(`Blue Channel (Mean: ${result.channel_intensities.blue_mean})`, 820, 80);
+            
+            // Load and display the three channel images side by side
+            const promises = [];
+            const channels = ['red', 'green', 'blue'];
+            const positions = [20, 420, 820];
+            
+            channels.forEach((channel, index) => {
+                const img = new Image();
+                const promise = new Promise((resolve) => {
+                    img.onload = () => {
+                        ctx.drawImage(img, positions[index], 100, 350, 250);
+                        resolve();
+                    };
+                    img.src = `data:image/png;base64,${result.channels[channel]}`;
+                });
+                promises.push(promise);
+            });
+            
+            await Promise.all(promises);
+            
+            return {
+                success: true,
+                processedImage: canvas.toDataURL('image/png'),
+                metadata: {
+                    operation: 'rgb_channel_extraction',
+                    channel_intensities: result.channel_intensities
+                }
+            };
+        }
+
+        if (operation === 'hsv-convert') {
+            // Create a composite image showing HSV conversion
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = 1600;
+            canvas.height = 400;
+            
+            // Set background
+            ctx.fillStyle = '#1a1a2e';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Add title
+            ctx.fillStyle = '#00ffff';
+            ctx.font = '20px "JetBrains Mono"';
+            ctx.fillText('HSV Color Space Conversion', 20, 30);
+            
+            // Channel labels
+            ctx.font = '14px "JetBrains Mono"';
+            ctx.fillStyle = '#ffff00';
+            ctx.fillText('HSV Image', 20, 80);
+            ctx.fillText('Hue Channel', 320, 80);
+            ctx.fillText('Saturation Channel', 620, 80);
+            ctx.fillText('Value Channel', 920, 80);
+            
+            // Load and display the images
+            const images = [
+                { src: result.hsv_image, x: 20 },
+                { src: result.hue_channel, x: 320 },
+                { src: result.saturation_channel, x: 620 },
+                { src: result.value_channel, x: 920 }
+            ];
+            
+            const promises = images.map(imgData => {
+                const img = new Image();
+                return new Promise((resolve) => {
+                    img.onload = () => {
+                        ctx.drawImage(img, imgData.x, 100, 280, 250);
+                        resolve();
+                    };
+                    img.src = `data:image/png;base64,${imgData.src}`;
+                });
+            });
+            
+            await Promise.all(promises);
+            
+            return {
+                success: true,
+                processedImage: canvas.toDataURL('image/png'),
+                metadata: {
+                    operation: 'hsv_conversion'
+                }
+            };
+        }
+
+        // For other operations
+        return {
+            success: true,
+            processedImage: `data:image/png;base64,${result.processed_image || result.processedImage}`,
+            metadata: result
+        };
+
+    } catch (error) {
+        console.error('Processing error:', error);
+        return {
+            success: false,
+            error: error.message
+        };
+    }
+}
+
+// Mock processing for demo when backend is not available
+async function mockProcessImage(image, operation) {
+    return new Promise(resolve => {
+        setTimeout(() => {
+            // Create a simple mock processed image (just return original for demo)
+            resolve({
+                success: true,
+                processedImage: image.src,
+                metadata: { operation: operation }
+            });
+        }, Math.random() * 1000 + 500); // Random delay between 500-1500ms
+    });
 }
 
 function addOperationParameters(formData, operation) {
